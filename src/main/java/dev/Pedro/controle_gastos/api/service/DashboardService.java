@@ -17,6 +17,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import static dev.Pedro.controle_gastos.api.service.calculo.RendimentoCalculator.calcularRendimento;
+
+
 @Service
 @Transactional
 
@@ -24,12 +27,11 @@ public class DashboardService {
 
     private final RegistroRepository registroRepository;
     private final InvestimentoRepository investimentoRepository;
-    private final InvestimentoService investimentoService;
 
-    public DashboardService(RegistroRepository registroRepository, InvestimentoRepository investimentoRepository, InvestimentoService investimentoService) {
+    public DashboardService(RegistroRepository registroRepository, InvestimentoRepository investimentoRepository) {
         this.registroRepository = registroRepository;
         this.investimentoRepository = investimentoRepository;
-        this.investimentoService = investimentoService;
+
     }
 
     public DashboardResponse dashboard() {
@@ -95,7 +97,7 @@ public class DashboardService {
 
     public BigDecimal aporte(){
 
-        return somaAporte(TipoInvestimento.APORTE);
+        return somaAporte();
     }
 
     public BigDecimal patrimonio() {
@@ -131,7 +133,7 @@ public class DashboardService {
 
     public BigDecimal aporteMensal() {
 
-        return somaAporteMensal(TipoInvestimento.APORTE);
+        return somaAporteMensal();
     }
 
   public BigDecimal rendimentoMensal() {
@@ -191,7 +193,7 @@ public class DashboardService {
         BigDecimal total = BigDecimal.ZERO;
 
         for (Investimento investimento : investimentos) {
-            total = total.add(investimentoService.calcularRendimento(investimento));
+            total = total.add(calcularRendimento(investimento));
         }
         return total;
     }
@@ -236,20 +238,20 @@ public class DashboardService {
     }
 
 
-    private BigDecimal somaAporte(TipoInvestimento tipo){
+    private BigDecimal somaAporte(){
 
-        return somaInvestimentos(investimentoRepository.findByTipo(tipo));
+        return somaInvestimentos(investimentoRepository.findByTipo(TipoInvestimento.APORTE));
 
     }
 
-    private BigDecimal somaAporteMensal(TipoInvestimento tipo){
+    private BigDecimal somaAporteMensal(){
 
         LocalDate hoje = LocalDate.now();
         LocalDate inicio = hoje.withDayOfMonth(1);
         LocalDate fim = hoje.withDayOfMonth(hoje.lengthOfMonth());
 
         return somaInvestimentos(investimentoRepository.findByTipoAndDataBetween(
-                tipo,
+                TipoInvestimento.APORTE,
                 inicio,
                 fim
         ));

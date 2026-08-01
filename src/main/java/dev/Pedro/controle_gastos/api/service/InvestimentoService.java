@@ -1,9 +1,7 @@
 package dev.Pedro.controle_gastos.api.service;
 
-import ch.obermuhlner.math.big.BigDecimalMath;
 import dev.Pedro.controle_gastos.api.dto.InvestimentoRequest;
 import dev.Pedro.controle_gastos.api.dto.InvestimentoResponse;
-import dev.Pedro.controle_gastos.api.dto.PrevisaoSaqueResponse;
 import dev.Pedro.controle_gastos.api.dto.RegistroResponse;
 import dev.Pedro.controle_gastos.domain.entity.Investimento;
 import dev.Pedro.controle_gastos.domain.entity.Registro;
@@ -14,13 +12,13 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.time.temporal.ChronoUnit.DAYS;
+import static dev.Pedro.controle_gastos.api.service.calculo.PrevisaoSaqueCalculator.*;
+import static dev.Pedro.controle_gastos.api.service.calculo.RendimentoCalculator.calcularRendimento;
+
 
 @Service
 @Transactional
@@ -182,175 +180,6 @@ public class InvestimentoService {
         }
 
     }
-
-    //INFORMAÇÕES para saque
-
-
-    public PrevisaoSaqueResponse previsaoSaque(Long id) {
-
-        Investimento investimento = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
-
-        return calcularInformacoesSaque(investimento);
-
-    }
-
-    //INICIO CALCULOS MONETARIOS
-
-
-    private LocalDate dataReferencia(Investimento investimento) {
-        return investimento.getUltimoSaque() == null
-                ? investimento.getData()
-                : investimento.getUltimoSaque();
-    }
-
-    private Long calcularDiasCorridos(LocalDate aplicacao, LocalDate saque) {
-
-        return DAYS.between(aplicacao, saque);
-    }
-
-    private BigDecimal calcularTaxaDiaria(BigDecimal taxa, PeriodicidadeTaxa periodicidadeTaxa) {
-
-        //Formula do jurosComposto JC = (1+i) ^ (1/n) - 1
-
-        //Define em qual "casa" para
-        MathContext mc = MathContext.DECIMAL64;
-
-        BigDecimal taxaDecimal = taxa.divide(BigDecimal.valueOf(100), mc); //Converte a taxa em decimal
-
-        BigDecimal base = BigDecimal.ONE.add(taxaDecimal); // (1 + i)
-
-        BigDecimal diasPeriodo = (periodicidadeTaxa == PeriodicidadeTaxa.ANUAL) // Define se a n é 365 ou 30
-                ? BigDecimal.valueOf(365)
-                : BigDecimal.valueOf(30);
-        BigDecimal expoente = BigDecimal.ONE.divide(diasPeriodo, mc); //(1/n)
-
-
-        return BigDecimalMath.pow(base, expoente, mc).subtract(BigDecimal.ONE);//(1+i) ^ (1/n) - 1
-
-    }
-
-    private BigDecimal valorBrutoFinal(Investimento investimento) {
-
-
-
-
-        BigDecimal taxaDiaria = calcularTaxaDiaria(investimento.getTaxaJuros(),investimento.getPeriodicidadeTaxa());
-        Long diasCorridos = calcularDiasCorridos(dataReferencia(investimento), LocalDate.now());
-
-
-        //Formula juros compostos = valor × (1 + taxaDiária) ^ diasCorridos
-
-        BigDecimal base = BigDecimal.valueOf(1.0).add(taxaDiaria); //(1 + taxaDiaria)
-        BigDecimal fatorPotencia = base.pow(diasCorridos.intValue());//(1+taxaDiaria)^diasCorridos
-
-
-
-
-        return investimento.getValorPosSaque().multiply(fatorPotencia);//valorAplicado × (1 + taxaDiária) ^ diasCorridos;
-
-
-    }
-
-    private BigDecimal calcularIOF(BigDecimal rendimentoBruto, LocalDate dataAplicacao) {
-
-
-        int[] tabelaIOF = {96, 93, 90, 86, 83, 80, 76, 73, 70, 66, 63, 60, 56, 53, 50, 46, 43, 40, 36, 33, 30, 26, 23, 20, 16, 13, 10, 6, 3};
-        BigDecimal iof = BigDecimal.ZERO;
-        BigDecimal aliquota;
-        Long diasCorridos = calcularDiasCorridos(dataAplicacao, LocalDate.now());
-
-        if (diasCorridos >= 30) {
-            aliquota = BigDecimal.ZERO;
-        } else if (diasCorridos <= 0) {
-            aliquota = BigDecimal.valueOf(tabelaIOF[0]);
-        } else {
-            aliquota = BigDecimal.valueOf(tabelaIOF[diasCorridos.intValue() - 1]);
-        }
-
-        if (rendimentoBruto.compareTo(BigDecimal.ZERO) > 0) {
-
-            //Caso a aliquota tenha valores estranhos cujo a divisão dê dizima ex 0,333... é necessário colcoar um MC na divisão
-            iof = rendimentoBruto.multiply(aliquota.divide(BigDecimal.valueOf(100)));
-        }
-
-        return iof;
-    }
-
-
-    private BigDecimal calcularIR(BigDecimal rendimentoLiquidoIOF, Investimento investimento) {
-
-        if (investimento.isIsentoIR()) {
-            return BigDecimal.ZERO;
-        }
-
-        Long diasCorridos = calcularDiasCorridos(dataReferencia(investimento), LocalDate.now());
-        BigDecimal aliquota;
-
-        if (diasCorridos <= 180) {
-            aliquota = BigDecimal.valueOf(22.5);
-        } else if (diasCorridos <= 360) {
-            aliquota = BigDecimal.valueOf(20);
-        } else if (diasCorridos <= 720) {
-            aliquota = BigDecimal.valueOf(17.5);
-        } else {
-            aliquota = BigDecimal.valueOf(15);
-        }
-
-        //Caso a aliquota tenha valores estranhos cujo a divisão dê dizima ex 0,333... é necessário colcoar um MC na divisão
-        return rendimentoLiquidoIOF.multiply(aliquota.divide(BigDecimal.valueOf(100)));
-    }
-
-    private BigDecimal valorDisponivelSaque(Investimento investimento) {
-
-     return calcularInformacoesSaque(investimento).valorDisponivel();
-
-    }
-
-    public BigDecimal calcularRendimento(Investimento investimento) {
-
-        return valorDisponivelSaque(investimento).subtract(investimento.getValorPosSaque());
-    }
-
-    //Esse metodo precisou de rounding em cada operação pois deu erro de lenght
-    private PrevisaoSaqueResponse calcularInformacoesSaque(Investimento investimento) {
-
-        if (investimento.getCategoria() == CategoriaInvestimento.OUTROS) {
-
-            BigDecimal valor = investimento.getValorPosSaque().setScale(2, RoundingMode.HALF_EVEN);
-
-            return new PrevisaoSaqueResponse(
-                    valor,
-                    BigDecimal.ZERO,
-                    BigDecimal.ZERO, valor
-            );
-        }
-
-        BigDecimal valorBruto = valorBrutoFinal(investimento).setScale(2, RoundingMode.HALF_EVEN);
-        BigDecimal rendimento = valorBruto.subtract(investimento.getValorPosSaque());
-
-        BigDecimal iof = calcularIOF(rendimento, dataReferencia(investimento)).setScale(2, RoundingMode.HALF_EVEN);
-        BigDecimal rendimentoLiquidoIOF = rendimento.subtract(iof);
-
-        BigDecimal ir = calcularIR(rendimentoLiquidoIOF, investimento).setScale(2, RoundingMode.HALF_EVEN);
-
-        BigDecimal valorDisponivel = investimento.getValorPosSaque()
-                .add(rendimentoLiquidoIOF)
-                .subtract(ir)
-                .setScale(2, RoundingMode.HALF_EVEN);
-
-        return new PrevisaoSaqueResponse(
-                valorBruto,
-                iof,
-                ir,
-                valorDisponivel
-        );
-
-    }
-
-    //FIM DOS CALCULOS MONETARIOS
-
-
 
      private Investimento toEntity(InvestimentoRequest investimentoRequest) {
 
