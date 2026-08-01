@@ -2,6 +2,7 @@ package dev.Pedro.controle_gastos.api.service;
 
 import dev.Pedro.controle_gastos.api.dto.InvestimentoRequest;
 import dev.Pedro.controle_gastos.api.dto.InvestimentoResponse;
+import dev.Pedro.controle_gastos.api.dto.PrevisaoSaqueResponse;
 import dev.Pedro.controle_gastos.api.dto.RegistroResponse;
 import dev.Pedro.controle_gastos.domain.entity.Investimento;
 import dev.Pedro.controle_gastos.domain.entity.Registro;
@@ -24,7 +25,6 @@ import static dev.Pedro.controle_gastos.api.service.calculo.RendimentoCalculator
 @Transactional
 
 public class InvestimentoService {
-
 
 
     private final InvestimentoRepository repository;
@@ -173,15 +173,24 @@ public class InvestimentoService {
 
     }
 
-    public void validaValor(InvestimentoRequest investimentoRequest){
+    public void validaValor(InvestimentoRequest investimentoRequest) {
 
-        if (investimentoRequest.valorAplicado().compareTo(BigDecimal.ZERO)<=0){
+        if (investimentoRequest.valorAplicado().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("O valor deve ser um número positivo e maior que 0");
         }
 
     }
 
-     private Investimento toEntity(InvestimentoRequest investimentoRequest) {
+    public PrevisaoSaqueResponse previsaoSaque(Long id) {
+
+        Investimento investimento = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
+
+        return calcularInformacoesSaque(investimento);
+    }
+
+
+    private Investimento toEntity(InvestimentoRequest investimentoRequest) {
 
         LocalDate data;
 
@@ -210,20 +219,20 @@ public class InvestimentoService {
             isentoIR = true;
         }
 
-            return new Investimento(
-                    investimentoRequest.descricao(),
-                    investimentoRequest.valorAplicado(),
-                    data,
-                    investimentoRequest.categoria(),
-                    TipoInvestimento.INVESTIMENTO,
-                    isentoIR,
-                    taxaJuros,
-                    periodicidadeTaxa);
-        }
+        return new Investimento(
+                investimentoRequest.descricao(),
+                investimentoRequest.valorAplicado(),
+                data,
+                investimentoRequest.categoria(),
+                TipoInvestimento.INVESTIMENTO,
+                isentoIR,
+                taxaJuros,
+                periodicidadeTaxa);
+    }
 
 
     //package-private
-     InvestimentoResponse toResponse(Investimento investimento) {
+    InvestimentoResponse toResponse(Investimento investimento) {
 
         return new InvestimentoResponse(
                 investimento.getId(),
@@ -254,5 +263,7 @@ public class InvestimentoService {
         return responses;
     }
 }
+
+
 
 
