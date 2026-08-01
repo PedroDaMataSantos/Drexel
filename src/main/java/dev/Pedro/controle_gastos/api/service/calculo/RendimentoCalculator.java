@@ -36,7 +36,7 @@ public class RendimentoCalculator {
     public static BigDecimal  valorBrutoFinal(Investimento investimento) {
 
 
-
+        MathContext mc = MathContext.DECIMAL64;
 
         BigDecimal taxaDiaria = calcularTaxaDiaria(investimento.getTaxaJuros(),investimento.getPeriodicidadeTaxa());
         Long diasCorridos = calcularDiasCorridos(dataReferencia(investimento.getData(),investimento.getUltimoSaque()), LocalDate.now());
@@ -45,7 +45,7 @@ public class RendimentoCalculator {
         //Formula juros compostos = valor × (1 + taxaDiária) ^ diasCorridos
 
         BigDecimal base = BigDecimal.valueOf(1.0).add(taxaDiaria); //(1 + taxaDiaria)
-        BigDecimal fatorPotencia = base.pow(diasCorridos.intValue());//(1+taxaDiaria)^diasCorridos
+        BigDecimal fatorPotencia = base.pow(diasCorridos.intValue(),mc);//(1+taxaDiaria)^diasCorridos
 
 
 
