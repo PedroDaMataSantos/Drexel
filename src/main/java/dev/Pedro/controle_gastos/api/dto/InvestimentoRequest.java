@@ -16,7 +16,6 @@ public record InvestimentoRequest(
         LocalDate data,
         CategoriaInvestimento categoria,
         TipoInvestimento tipo,
-        boolean isentoIR,
         BigDecimal taxaJuros,
         PeriodicidadeTaxa periodicidadeTaxa
 

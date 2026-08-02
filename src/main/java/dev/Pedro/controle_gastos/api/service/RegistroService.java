@@ -39,9 +39,8 @@ public class RegistroService {
 
     public RegistroResponse create(RegistroRequest registroRequest) {
 
-        validaCamposObg(registroRequest);
         validarCategoria_Tipo(registroRequest);
-        validaValor(registroRequest);
+
 
         Registro registro = toEntity(registroRequest);
 
@@ -50,10 +49,8 @@ public class RegistroService {
 
     public RegistroResponse update(Long id, RegistroRequest registroRequest) {
 
-        //Valida denovo , para não ocorrer erros
-        validaCamposObg(registroRequest);
+
         validarCategoria_Tipo(registroRequest);
-        validaValor(registroRequest);
 
         //Valida se o registro existe e retorna o erro
         Registro registroExistente = repository.findById(id)
@@ -129,24 +126,7 @@ public class RegistroService {
     }
 
 
-    //validar campos obrigatórios
 
-    public void validaCamposObg(RegistroRequest registroRequest) {
-
-        if (registroRequest.tipoRegistro() == null) {
-            throw new RuntimeException("Tipo é um campo Obrigatório");
-        }
-
-        if (registroRequest.categoria() == null) {
-            throw new RuntimeException("Categoria é um campo Obrigatório");
-        }
-
-
-        if (registroRequest.valor() == null) {
-            throw new RuntimeException("Valor é um campo Obrigatório");
-        }
-
-    }
     public InvestimentoResponse investir(BigDecimal valorAplicado, CategoriaInvestimento categoria, String descricao,
                                          boolean isentoIR, BigDecimal taxaJuros, PeriodicidadeTaxa periodicidadeTaxa) {
 
@@ -197,13 +177,6 @@ public class RegistroService {
         }
     }
 
-    public void validaValor(RegistroRequest registroRequest){
-
-        if (registroRequest.valor().compareTo(BigDecimal.ZERO)<=0){
-            throw new RuntimeException("O valor deve ser um número positivo e maior que 0");
-        }
-
-    }
 
     //Transforma a entrada (Request) em entity para a operação no DB
     private Registro toEntity(RegistroRequest registroRequest) {

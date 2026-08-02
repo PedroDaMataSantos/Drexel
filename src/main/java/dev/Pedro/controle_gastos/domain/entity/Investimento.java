@@ -68,7 +68,11 @@ public class Investimento {
     private LocalDate ultimoSaque;
 
 
-    public Investimento(String descricao, BigDecimal valorAplicado, LocalDate data, CategoriaInvestimento categoria, TipoInvestimento tipo, boolean isentoIR, BigDecimal taxaJuros, PeriodicidadeTaxa periodicidadeTaxa) {
+    public Investimento(String descricao, BigDecimal valorAplicado,
+                        LocalDate data, CategoriaInvestimento categoria,
+                        TipoInvestimento tipo, boolean isentoIR,
+                        BigDecimal taxaJuros, PeriodicidadeTaxa periodicidadeTaxa) {
+
         this.descricao = descricao;
         this.valorAplicado = valorAplicado;
         this.valorPosSaque = valorAplicado;
