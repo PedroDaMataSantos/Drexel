@@ -37,19 +37,16 @@ public class InvestimentoService {
 
     public InvestimentoResponse create(InvestimentoRequest investimentoRequest) {
 
-        validaCampoObg(investimentoRequest);
-        validaValor(investimentoRequest);
+
         Investimento investimento = toEntity(investimentoRequest);
 
         return toResponse(repository.save(investimento));
 
     }
 
-
     public InvestimentoResponse update(Long id, InvestimentoRequest investimentoRequest) {
 
-        validaCampoObg(investimentoRequest);
-        validaValor(investimentoRequest);
+
 
         Investimento investimentoExistente = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
@@ -62,15 +59,25 @@ public class InvestimentoService {
             investimentoExistente.setData(investimentoRequest.data());
         }
 
+
+
         investimentoExistente.setCategoria(investimentoRequest.categoria());
 
-        investimentoExistente.setTaxaJuros(investimentoRequest.taxaJuros());
+        if (investimentoRequest.categoria() != CategoriaInvestimento.OUTROS) {
+            investimentoExistente.setTaxaJuros(investimentoRequest.taxaJuros());
 
-        investimentoExistente.setPeriodicidadeTaxa(investimentoRequest.periodicidadeTaxa());
+            investimentoExistente.setPeriodicidadeTaxa(investimentoRequest.periodicidadeTaxa());
+
+        }else{
+            ajustarTaxaPeridiocidadeAutomaticamente(investimentoExistente,investimentoRequest.categoria());
+        }
+
+        investimentoExistente.setIsentoIR(calcularIsentoIR(investimentoRequest.categoria()));
+
+
 
         return toResponse(repository.save(investimentoExistente));
     }
-
 
     public void delete(Long id) {
 
@@ -152,34 +159,6 @@ public class InvestimentoService {
         );
     }
 
-    public void validaCampoObg(InvestimentoRequest investimentoRequest) {
-
-        if (investimentoRequest.valorAplicado() == null) {
-            throw new RuntimeException("Valor Aplicado é um campo Obrigatório");
-        }
-
-        if (investimentoRequest.categoria() == null) {
-            throw new RuntimeException("Categoria é um campo Obrigatório");
-        }
-
-        if (investimentoRequest.categoria() != CategoriaInvestimento.OUTROS) {
-            if (investimentoRequest.taxaJuros() == null) {
-                throw new RuntimeException("Taxa de juros é obrigatória para esta categoria");
-            }
-            if (investimentoRequest.periodicidadeTaxa() == null) {
-                throw new RuntimeException("Periodicidade da taxa é obrigatória para esta categoria");
-            }
-        }
-
-    }
-
-    public void validaValor(InvestimentoRequest investimentoRequest) {
-
-        if (investimentoRequest.valorAplicado().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("O valor deve ser um número positivo e maior que 0");
-        }
-
-    }
 
     public PrevisaoSaqueResponse previsaoSaque(Long id) {
 
@@ -189,45 +168,44 @@ public class InvestimentoService {
         return calcularInformacoesSaque(investimento);
     }
 
+    private boolean calcularIsentoIR(CategoriaInvestimento categoria) {
+        return categoria == CategoriaInvestimento.LCI
+                || categoria == CategoriaInvestimento.LCA
+                || categoria == CategoriaInvestimento.POUPANCA
+                || categoria == CategoriaInvestimento.OUTROS;
+    }
+
+    private void ajustarTaxaPeridiocidadeAutomaticamente(Investimento investimento, CategoriaInvestimento categoria) {
+        if (categoria == CategoriaInvestimento.OUTROS) {
+            investimento.setTaxaJuros(BigDecimal.ZERO);
+            investimento.setPeriodicidadeTaxa(null);
+        }
+    }
+
+
+
 
     private Investimento toEntity(InvestimentoRequest investimentoRequest) {
 
-        LocalDate data;
-
-        BigDecimal taxaJuros = investimentoRequest.taxaJuros();
-        boolean isentoIR = investimentoRequest.isentoIR();
-        PeriodicidadeTaxa periodicidadeTaxa = investimentoRequest.periodicidadeTaxa();
-        CategoriaInvestimento categoria = investimentoRequest.categoria();
+        LocalDate data = investimentoRequest.data()==null
+                ? LocalDate.now()
+                :investimentoRequest.data();
 
 
-        if (investimentoRequest.data() == null) {
-            data = LocalDate.now();
-        } else {
-            data = investimentoRequest.data();
-        }
 
-        if (categoria == CategoriaInvestimento.OUTROS) {
-            taxaJuros = BigDecimal.ZERO;
-            periodicidadeTaxa = null;
-            isentoIR = true;   // OUTROS não rende, então não há IR mesmo
-        }
-
-
-        if (categoria == CategoriaInvestimento.LCI
-                || categoria == CategoriaInvestimento.LCA
-                || categoria == CategoriaInvestimento.POUPANCA) {
-            isentoIR = true;
-        }
-
-        return new Investimento(
+        Investimento investimento = new Investimento(
                 investimentoRequest.descricao(),
                 investimentoRequest.valorAplicado(),
                 data,
                 investimentoRequest.categoria(),
                 TipoInvestimento.INVESTIMENTO,
-                isentoIR,
-                taxaJuros,
-                periodicidadeTaxa);
+                calcularIsentoIR(investimentoRequest.categoria()),
+                investimentoRequest.taxaJuros(),
+                investimentoRequest.periodicidadeTaxa());
+
+        ajustarTaxaPeridiocidadeAutomaticamente(investimento,investimento.getCategoria());
+
+        return investimento;
     }
 
 

@@ -17,11 +17,12 @@ import java.time.LocalDate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
 
- class Crud{
-   @Autowired
-   private RestTestClient restTestClient;
+ class Crud {
+    @Autowired
+    private RestTestClient restTestClient;
+
     @Test
-    void testCreateInvestimentoSucess(){
+    void testCreateInvestimentoSucess() {
         var request = new InvestimentoRequest(
                 "teste automatizado",
                 new BigDecimal(1000),
@@ -49,9 +50,25 @@ import java.time.LocalDate;
                 .jsonPath("$.periodicidadeTaxa").isEqualTo(request.periodicidadeTaxa().toString());
 
     }
-    @Test
-    void testCreateInvestimentoFailure(){
 
+    @Test
+    void testCreateInvestimentoFailure() {
+        var request = new InvestimentoRequest(
+                "teste automatizado",
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null);
+
+        restTestClient
+                .post()
+                .uri("/scontg/investimentos")
+                .body(request)
+                .exchange()
+                .expectStatus().is5xxServerError();
     }
 }
 
