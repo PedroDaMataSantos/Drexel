@@ -1,7 +1,7 @@
 package dev.Pedro.controle_gastos.api.service.crud;
 
 import dev.Pedro.controle_gastos.api.dto.InvestimentoRequest;
-import dev.Pedro.controle_gastos.domain.entity.Investimento;
+import dev.Pedro.controle_gastos.api.dto.InvestimentoResponse;
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
 import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
 import dev.Pedro.controle_gastos.enums.TipoInvestimento;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
 
- class Crud {
+ class InvestimentoCrud {
     @Autowired
     private RestTestClient restTestClient;
 
@@ -29,7 +29,6 @@ import java.time.LocalDate;
                 LocalDate.of(2026, 1, 1),
                 CategoriaInvestimento.CDB,
                 TipoInvestimento.INVESTIMENTO,
-                true,
                 new BigDecimal("0.105"),
                 PeriodicidadeTaxa.ANUAL);
 
@@ -45,9 +44,9 @@ import java.time.LocalDate;
                 .jsonPath("$.data").isEqualTo(request.data().toString())
                 .jsonPath("$.categoria").isEqualTo(request.categoria().toString())
                 .jsonPath("$.tipo").isEqualTo(request.tipo().toString())
-                .jsonPath("$.isentoIR").isEqualTo(request.isentoIR())
                 .jsonPath("$.taxaJuros").isEqualTo(request.taxaJuros())
-                .jsonPath("$.periodicidadeTaxa").isEqualTo(request.periodicidadeTaxa().toString());
+                .jsonPath("$.periodicidadeTaxa").isEqualTo(request.periodicidadeTaxa().toString())
+                .jsonPath("$.isentoIR").isEqualTo(false);
 
     }
 
@@ -59,7 +58,6 @@ import java.time.LocalDate;
                 null,
                 null,
                 null,
-                true,
                 null,
                 null);
 
@@ -70,5 +68,51 @@ import java.time.LocalDate;
                 .exchange()
                 .expectStatus().is5xxServerError();
     }
+
+    @Test
+    void testUpdateInvestimentoSucess() {
+        var request = new InvestimentoRequest(
+                "",
+                new BigDecimal(100),
+                LocalDate.now(),
+                CategoriaInvestimento.CDB,
+                TipoInvestimento.INVESTIMENTO,
+                new BigDecimal("0.105"),
+                PeriodicidadeTaxa.ANUAL
+        );
+
+        InvestimentoResponse criado = restTestClient
+                .post()
+                .uri("/scontg/investimentos")
+                .body(request)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(InvestimentoResponse.class)
+                .returnResult()
+                .getResponseBody();
+
+
+        var requestAtualizado = new InvestimentoRequest(
+                "descricao atualizada",
+                new BigDecimal(2000),
+                LocalDate.of(2026, 6, 1),
+                CategoriaInvestimento.LCI,
+                TipoInvestimento.INVESTIMENTO,
+                new BigDecimal("0.09"),
+                PeriodicidadeTaxa.MENSAL);
+
+        restTestClient
+                .put()
+                .uri("/scontg/investimentos/" + criado.id())
+                .body(requestAtualizado)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.descricao").isEqualTo(requestAtualizado.descricao())
+                .jsonPath("$.categoria").isEqualTo(requestAtualizado.categoria().toString())
+                .jsonPath("$.isentoIR").isEqualTo(true);
+    }
+
+
 }
 
