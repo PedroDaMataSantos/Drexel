@@ -5,6 +5,7 @@ import dev.Pedro.controle_gastos.enums.TipoRegistro;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,6 +43,7 @@ public class Registro {
     private String descricao;
 
     @NotNull
+    @PositiveOrZero
     @Digits(integer = 10, fraction = 2)
     @Column(name = "valor", nullable = false, precision = 12, scale = 2)
     private BigDecimal valor;

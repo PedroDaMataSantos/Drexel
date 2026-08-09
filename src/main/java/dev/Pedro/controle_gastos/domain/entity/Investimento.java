@@ -6,6 +6,7 @@ import dev.Pedro.controle_gastos.enums.TipoInvestimento;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,11 +30,13 @@ public class Investimento {
     private String descricao;
 
     @NotNull
+    @PositiveOrZero
     @Digits(integer = 10, fraction = 2)
     @Column(name = "valorAplicado", nullable = false, precision = 12, scale = 2)
     private BigDecimal valorAplicado;
 
     @NotNull
+    @PositiveOrZero
     @Digits(integer = 10, fraction = 2)
     @Column(name = "valorPosSaque", nullable = false, precision = 12, scale = 2)
     private BigDecimal valorPosSaque;
@@ -57,6 +60,7 @@ public class Investimento {
     private boolean isentoIR;
 
     @NotNull
+    @PositiveOrZero
     @Column(name = "taxa_juros",nullable = false, precision = 8, scale = 4)
     private BigDecimal taxaJuros;
 
