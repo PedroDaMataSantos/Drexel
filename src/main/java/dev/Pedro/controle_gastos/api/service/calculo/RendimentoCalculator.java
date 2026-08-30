@@ -1,7 +1,7 @@
 package dev.Pedro.controle_gastos.api.service.calculo;
 
 import ch.obermuhlner.math.big.BigDecimalMath;
-import dev.Pedro.controle_gastos.domain.entity.Investimento;
+import dev.Pedro.controle_gastos.domain.entity.Investimento.Investimento;
 import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
 
 import java.math.BigDecimal;

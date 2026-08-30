@@ -1,12 +1,10 @@
 package dev.Pedro.controle_gastos.api.service;
 
 import dev.Pedro.controle_gastos.api.dto.DashboardResponse;
-import dev.Pedro.controle_gastos.domain.entity.Investimento;
 import dev.Pedro.controle_gastos.domain.entity.Registro;
 import dev.Pedro.controle_gastos.domain.repository.InvestimentoRepository;
 import dev.Pedro.controle_gastos.domain.repository.RegistroRepository;
 import dev.Pedro.controle_gastos.enums.CategoriaRegistro;
-import dev.Pedro.controle_gastos.enums.TipoInvestimento;
 import dev.Pedro.controle_gastos.enums.TipoRegistro;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;

@@ -4,7 +4,7 @@ package dev.Pedro.controle_gastos.api.service;
 import dev.Pedro.controle_gastos.api.dto.InvestimentoResponse;
 import dev.Pedro.controle_gastos.api.dto.RegistroRequest;
 import dev.Pedro.controle_gastos.api.dto.RegistroResponse;
-import dev.Pedro.controle_gastos.domain.entity.Investimento;
+import dev.Pedro.controle_gastos.domain.entity.Investimento.Investimento;
 import dev.Pedro.controle_gastos.domain.entity.Registro;
 import dev.Pedro.controle_gastos.domain.repository.InvestimentoRepository;
 import dev.Pedro.controle_gastos.domain.repository.RegistroRepository;
