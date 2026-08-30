@@ -1,12 +1,21 @@
 package dev.Pedro.controle_gastos.domain.entity;
 
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
-import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
 import dev.Pedro.controle_gastos.enums.TipoInvestimento;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,75 +25,53 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "investimento")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
-@Setter
-@NoArgsConstructor
-
-public class Investimento {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public abstract class Investimento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "descricao", nullable = true, length = 200)
+    @Setter
+    @Column(name = "descricao", length = 200)
     private String descricao;
 
+    @Setter
     @NotNull
     @PositiveOrZero
     @Digits(integer = 10, fraction = 2)
     @Column(name = "valorAplicado", nullable = false, precision = 12, scale = 2)
     private BigDecimal valorAplicado;
 
-    @NotNull
-    @PositiveOrZero
-    @Digits(integer = 10, fraction = 2)
-    @Column(name = "valorPosSaque", nullable = false, precision = 12, scale = 2)
-    private BigDecimal valorPosSaque;
-
-
+    @Setter
     @NotNull
     @Column(name = "data", nullable = false)
     private LocalDate data;
 
+    @Setter
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "categoria", nullable = false, length = 20)
     private CategoriaInvestimento categoria;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo", nullable = false)
-    private TipoInvestimento tipo;
-
-    @Column(name = "isentoIR" , nullable = false)
-    private boolean isentoIR;
-
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "taxa_juros",nullable = false, precision = 8, scale = 4)
-    private BigDecimal taxaJuros;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "periodicidade_taxa", length = 10)
-    private PeriodicidadeTaxa periodicidadeTaxa;
-
-    @Column(name = "ultimo_saque")
-    private LocalDate ultimoSaque;
+    @Column(name = "isAporte", nullable = false)
+    private boolean isAporte;
 
 
-    public Investimento(String descricao, BigDecimal valorAplicado,
-                        LocalDate data, CategoriaInvestimento categoria,
-                        TipoInvestimento tipo, boolean isentoIR,
-                        BigDecimal taxaJuros, PeriodicidadeTaxa periodicidadeTaxa) {
 
+    protected Investimento(
+            String descricao,
+            BigDecimal valorAplicado,
+            LocalDate data,
+            CategoriaInvestimento categoria,
+            Boolean isAporte
+    ) {
         this.descricao = descricao;
         this.valorAplicado = valorAplicado;
-        this.valorPosSaque = valorAplicado;
         this.data = data;
         this.categoria = categoria;
-        this.tipo = tipo;
-        this.isentoIR = isentoIR;
-        this.taxaJuros = taxaJuros;
-        this.periodicidadeTaxa = periodicidadeTaxa;
+        this.isAporte = isAporte;
     }
 }
