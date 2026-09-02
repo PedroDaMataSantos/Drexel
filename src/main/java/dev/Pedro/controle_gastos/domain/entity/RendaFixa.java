@@ -2,7 +2,6 @@ package dev.Pedro.controle_gastos.domain.entity;
 
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
 import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
-import dev.Pedro.controle_gastos.enums.TipoInvestimento;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,11 +29,19 @@ public class RendaFixa extends Investimento {
     @Column(name = "saldo_atual", nullable = false, precision = 12, scale = 2)
     private BigDecimal saldoAtual;
 
+    @NotNull
+    @PositiveOrZero
+    @Digits(integer = 10, fraction = 2)
+    @Column(name = "valorAplicado", nullable = false, precision = 12, scale = 2)
+    private BigDecimal valorAplicado;
+
+
     @Column(name = "isento_ir", nullable = false)
-    private boolean isentoIr;
+    private boolean isentoIR;
 
     @NotNull
     @PositiveOrZero
+    @Digits(integer = 4, fraction = 4)
     @Column(name = "taxa_juros", nullable = false, precision = 8, scale = 4)
     private BigDecimal taxaJuros;
 
@@ -52,7 +59,7 @@ public class RendaFixa extends Investimento {
             LocalDate data,
             CategoriaInvestimento categoria,
             boolean isAporte,
-            boolean isentoIr,
+            boolean isentoIR,
             BigDecimal taxaJuros,
             PeriodicidadeTaxa periodicidadeTaxa
     ) {
@@ -64,8 +71,10 @@ public class RendaFixa extends Investimento {
                 isAporte
         );
 
+
+        this.valorAplicado = valorAplicado;
         this.saldoAtual = valorAplicado;
-        this.isentoIr = isentoIr;
+        this.isentoIR = isentoIR;
         this.taxaJuros = taxaJuros;
         this.periodicidadeTaxa = periodicidadeTaxa;
 

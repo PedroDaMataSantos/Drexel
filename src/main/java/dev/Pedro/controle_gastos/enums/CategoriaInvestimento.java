@@ -3,18 +3,21 @@ package dev.Pedro.controle_gastos.enums;
 public enum CategoriaInvestimento {
 
     // RECEITAS
-    CDB("CDB"),
-    LCI("LCI"),
-    LCA("LCA"),
-    POUPANCA("Poupança" ),
-    OUTROS("Outros Investimentos");
+    CDB("CDB",false),
+    LCI("LCI",true),
+    LCA("LCA",true),
+    POUPANCA("Poupança",true),
+    OUTROS("Outros Investimentos",false);
 
 
     private final String descricao;
+    private final boolean isIsento;
 
 
-    CategoriaInvestimento(String descricao) {
+    CategoriaInvestimento(String descricao,boolean isIsentoIR) {
         this.descricao = descricao;
+        this.isIsento = isIsentoIR;
+
 
     }
 

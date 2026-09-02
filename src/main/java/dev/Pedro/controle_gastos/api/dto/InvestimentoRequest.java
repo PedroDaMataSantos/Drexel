@@ -15,11 +15,6 @@ public record InvestimentoRequest(
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate data,
         CategoriaInvestimento categoria,
-        TipoInvestimento tipo,
-        BigDecimal taxaJuros,
-        PeriodicidadeTaxa periodicidadeTaxa
-
-
-
+        boolean isAporte
 ) {
 }
