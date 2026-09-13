@@ -36,11 +36,13 @@ public class RegistroController {
 
     @PostMapping("/aportar")
     @ResponseStatus(HttpStatus.CREATED)
-    public InvestimentoResponse investir(@RequestParam BigDecimal valor, @RequestParam CategoriaInvestimento categoria,
-                                         @RequestParam String descricao, @RequestParam boolean isentoIR ,
-                                         @RequestParam BigDecimal taxaJuros, @RequestParam PeriodicidadeTaxa periodicidadeTaxa) {
+    public InvestimentoResponse investir(@RequestParam BigDecimal valor,
+                                         @RequestParam CategoriaInvestimento categoria,
+                                         @RequestParam String descricao,
+                                         @RequestParam BigDecimal taxaJuros,
+                                         @RequestParam PeriodicidadeTaxa periodicidadeTaxa) {
 
-        return service.investir(valor, categoria, descricao, isentoIR, taxaJuros, periodicidadeTaxa);
+        return service.investir(valor, categoria, descricao, taxaJuros, periodicidadeTaxa);
     }
 
     @PutMapping("/{id}")

@@ -238,7 +238,7 @@ public class DashboardService {
 
     private BigDecimal somaAporte(){
 
-        return somaInvestimentos(investimentoRepository.findByTipo(TipoInvestimento.APORTE));
+        return somaInvestimentos(investimentoRepository.findByisAporte(true));
 
     }
 
@@ -248,8 +248,8 @@ public class DashboardService {
         LocalDate inicio = hoje.withDayOfMonth(1);
         LocalDate fim = hoje.withDayOfMonth(hoje.lengthOfMonth());
 
-        return somaInvestimentos(investimentoRepository.findByTipoAndDataBetween(
-                TipoInvestimento.APORTE,
+        return somaInvestimentos(investimentoRepository.findByisAporteAndDataBetween(
+                true,
                 inicio,
                 fim
         ));

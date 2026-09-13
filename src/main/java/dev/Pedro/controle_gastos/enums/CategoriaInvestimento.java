@@ -21,6 +21,10 @@ public enum CategoriaInvestimento {
 
     }
 
+    public boolean isIsento() {
+        return isIsento;
+    }
+
     public String getDescricao() {
         return descricao;
     }

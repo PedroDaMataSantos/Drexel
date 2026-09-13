@@ -1,7 +1,7 @@
 package dev.Pedro.controle_gastos.api.service.calculo;
 
 import dev.Pedro.controle_gastos.api.dto.PrevisaoSaqueResponse;
-import dev.Pedro.controle_gastos.domain.entity.Investimento.Investimento;
+import dev.Pedro.controle_gastos.domain.entity.RendaFixa;
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
 
 import java.math.BigDecimal;
@@ -15,31 +15,20 @@ import static dev.Pedro.controle_gastos.api.service.calculo.TributacaoCalculator
 public class PrevisaoSaqueCalculator {
 
     //Esse metodo precisou de rounding em cada operação pois deu erro de lenght
-    public static PrevisaoSaqueResponse calcularInformacoesSaque(Investimento investimento) {
+    public static PrevisaoSaqueResponse calcularInformacoesSaque(RendaFixa rendaFixa) {
 
-        if (investimento.getCategoria() == CategoriaInvestimento.OUTROS) {
-
-            BigDecimal valor = investimento.getValorPosSaque().setScale(2, RoundingMode.HALF_EVEN);
-
-            return new PrevisaoSaqueResponse(
-                    valor,
-                    BigDecimal.ZERO,
-                    BigDecimal.ZERO, valor
-            );
-        }
-
-        LocalDate dataReferencia = dataReferencia(investimento.getData(),investimento.getUltimoSaque());
+        LocalDate dataReferencia = dataReferencia(rendaFixa.getData(),rendaFixa.getUltimoSaque());
         long diasCorridos = calcularDiasCorridos(dataReferencia, LocalDate.now());
 
-        BigDecimal valorBruto = valorBrutoFinal(investimento).setScale(2, RoundingMode.HALF_EVEN);
-        BigDecimal rendimento = valorBruto.subtract(investimento.getValorPosSaque());
+        BigDecimal valorBruto = valorBrutoFinal(rendaFixa).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal rendimento = valorBruto.subtract(rendaFixa.getSaldoAtual());
 
         BigDecimal iof = calcularIOF(rendimento, dataReferencia).setScale(2, RoundingMode.HALF_EVEN);
         BigDecimal rendimentoLiquidoIOF = rendimento.subtract(iof);
 
-        BigDecimal ir = calcularIR(rendimentoLiquidoIOF, investimento.isIsentoIR(),diasCorridos).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal ir = calcularIR(rendimentoLiquidoIOF, rendaFixa.isIsentoIR(),diasCorridos).setScale(2, RoundingMode.HALF_EVEN);
 
-        BigDecimal valorDisponivel = investimento.getValorPosSaque()
+        BigDecimal valorDisponivel = rendaFixa.getSaldoAtual()
                 .add(rendimentoLiquidoIOF)
                 .subtract(ir)
                 .setScale(2, RoundingMode.HALF_EVEN);
@@ -52,9 +41,9 @@ public class PrevisaoSaqueCalculator {
         );
 
     }
-    public static BigDecimal valorDisponivelSaque(Investimento investimento) {
+    public static BigDecimal valorDisponivelSaque(RendaFixa rendaFixa) {
 
-        return calcularInformacoesSaque(investimento).valorDisponivel();
+        return calcularInformacoesSaque(rendaFixa).valorDisponivel();
 
     }
 

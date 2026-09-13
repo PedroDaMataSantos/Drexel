@@ -1,7 +1,7 @@
 package dev.Pedro.controle_gastos.api.service.calculo;
 
 import ch.obermuhlner.math.big.BigDecimalMath;
-import dev.Pedro.controle_gastos.domain.entity.Investimento.Investimento;
+import dev.Pedro.controle_gastos.domain.entity.RendaFixa;
 import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
 
 import java.math.BigDecimal;
@@ -33,13 +33,13 @@ public class RendimentoCalculator {
 
     }
 
-    public static BigDecimal  valorBrutoFinal(Investimento investimento) {
+    public static BigDecimal  valorBrutoFinal(RendaFixa rendaFixa) {
 
 
         MathContext mc = MathContext.DECIMAL64;
 
-        BigDecimal taxaDiaria = calcularTaxaDiaria(investimento.getTaxaJuros(),investimento.getPeriodicidadeTaxa());
-        Long diasCorridos = calcularDiasCorridos(dataReferencia(investimento.getData(),investimento.getUltimoSaque()), LocalDate.now());
+        BigDecimal taxaDiaria = calcularTaxaDiaria(rendaFixa.getTaxaJuros(),rendaFixa.getPeriodicidadeTaxa());
+        Long diasCorridos = calcularDiasCorridos(dataReferencia(rendaFixa.getData(),rendaFixa.getUltimoSaque()), LocalDate.now());
 
 
         //Formula juros compostos = valor × (1 + taxaDiária) ^ diasCorridos
@@ -50,14 +50,14 @@ public class RendimentoCalculator {
 
 
 
-        return investimento.getValorPosSaque().multiply(fatorPotencia);//valorAplicado × (1 + taxaDiária) ^ diasCorridos;
+        return rendaFixa.getSaldoAtual().multiply(fatorPotencia);//valorAplicado × (1 + taxaDiária) ^ diasCorridos;
 
 
     }
 
-    public static BigDecimal calcularRendimento(Investimento investimento) {
+    public static BigDecimal calcularRendimento(RendaFixa rendaFixa) {
 
-        return valorBrutoFinal(investimento).subtract(investimento.getValorPosSaque());
+        return valorBrutoFinal(rendaFixa).subtract(rendaFixa.getSaldoAtual());
     }
 
 

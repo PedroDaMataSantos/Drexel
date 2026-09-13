@@ -26,7 +26,6 @@ public class TributacaoCalculator {
 
         if (rendimentoBruto.compareTo(BigDecimal.ZERO) > 0) {
 
-            //Caso a aliquota tenha valores estranhos cujo a divisão dê dizima ex 0,333... é necessário colcoar um MC na divisão
             iof = rendimentoBruto.multiply(aliquota.divide(BigDecimal.valueOf(100)));
         }
 
@@ -52,7 +51,6 @@ public class TributacaoCalculator {
             aliquota = BigDecimal.valueOf(15);
         }
 
-        //Caso a aliquota tenha valores estranhos cujo a divisão dê dizima ex 0,333... é necessário colcoar um MC na divisão
         return rendimentoLiquidoIOF.multiply(aliquota.divide(BigDecimal.valueOf(100)));
     }
 

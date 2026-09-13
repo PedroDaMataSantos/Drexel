@@ -22,5 +22,5 @@ public record RendaFixaResponse(
         LocalDate ultimoSaque,
         BigDecimal rendimento,
         BigDecimal valorBruto
-) {
+) implements InvestimentoResponse   {
 }

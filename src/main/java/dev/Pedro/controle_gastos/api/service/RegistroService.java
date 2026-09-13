@@ -1,13 +1,18 @@
 package dev.Pedro.controle_gastos.api.service;
 
 
+
 import dev.Pedro.controle_gastos.api.dto.InvestimentoResponse;
 import dev.Pedro.controle_gastos.api.dto.RegistroRequest;
 import dev.Pedro.controle_gastos.api.dto.RegistroResponse;
-import dev.Pedro.controle_gastos.domain.entity.Investimento.Investimento;
+import dev.Pedro.controle_gastos.api.dto.RendaFixaResponse;
+import dev.Pedro.controle_gastos.api.dto.mapper.InvestimentoMapper;
+
 import dev.Pedro.controle_gastos.domain.entity.Registro;
-import dev.Pedro.controle_gastos.domain.repository.InvestimentoRepository;
+import dev.Pedro.controle_gastos.domain.entity.RendaFixa;
+
 import dev.Pedro.controle_gastos.domain.repository.RegistroRepository;
+import dev.Pedro.controle_gastos.domain.repository.RendaFixaRepository;
 import dev.Pedro.controle_gastos.enums.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +29,17 @@ public class RegistroService {
 
 
     private final RegistroRepository repository;
-    private final InvestimentoRepository investimentoRepository;
+    private final RendaFixaRepository rendaFixaRepository;
     private final DashboardService dashboardService;
-    private final InvestimentoService investimentoService;
+    private final InvestimentoMapper mapper;
 
-    public RegistroService(RegistroRepository repository, InvestimentoRepository investimentoRepository, DashboardService dashboardService, InvestimentoService investimentoService) {
+    public RegistroService(RegistroRepository repository, RendaFixaRepository rendaFixaRepository,
+                           DashboardService dashboardService, InvestimentoMapper mapper) {
+
         this.repository = repository;
-        this.investimentoRepository = investimentoRepository;
+        this.rendaFixaRepository = rendaFixaRepository;
         this.dashboardService = dashboardService;
-        this.investimentoService = investimentoService;
+        this.mapper = mapper;
     }
 
     //Create
@@ -127,40 +134,28 @@ public class RegistroService {
 
 
 
-    public InvestimentoResponse investir(BigDecimal valorAplicado, CategoriaInvestimento categoria, String descricao,
-                                         boolean isentoIR, BigDecimal taxaJuros, PeriodicidadeTaxa periodicidadeTaxa) {
+    public InvestimentoResponse investir(BigDecimal valorAplicado,
+                                      CategoriaInvestimento categoria,
+                                      String descricao,
+                                      BigDecimal taxaJuros,
+                                      PeriodicidadeTaxa periodicidadeTaxa) {
 
         if (valorAplicado.compareTo(BigDecimal.ZERO) <= 0 || valorAplicado.compareTo(dashboardService.saldoTotal()) > 0) {
             throw new RuntimeException("O valor deve ser maior que zero.");
         }
 
 
-        if (categoria == CategoriaInvestimento.OUTROS) {
-            taxaJuros = BigDecimal.ZERO;
-            periodicidadeTaxa = null;
-            isentoIR = true;   // OUTROS não rende, então não há IR mesmo
-        }
-
-
-        if (categoria == CategoriaInvestimento.LCI
-                || categoria == CategoriaInvestimento.LCA
-                || categoria == CategoriaInvestimento.POUPANCA) {
-            isentoIR = true;
-        }
-
-        Investimento investimento = new Investimento(
+        RendaFixa rendaFixa = new RendaFixa(
                 descricao,
                 valorAplicado,
                 LocalDate.now(),
                 categoria,
-                TipoInvestimento.APORTE,
-                isentoIR,
+                true,
+                categoria.isIsento(),
                 taxaJuros,
                 periodicidadeTaxa);
 
-
-
-        return investimentoService.toResponse(investimentoRepository.save(investimento));
+        return mapper.toResponse(rendaFixaRepository.save(rendaFixa));
     }
 
 
