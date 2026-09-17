@@ -1,9 +1,12 @@
 package dev.Pedro.controle_gastos.api.service;
 
 import dev.Pedro.controle_gastos.api.dto.DashboardResponse;
+import dev.Pedro.controle_gastos.domain.entity.Investimento;
 import dev.Pedro.controle_gastos.domain.entity.Registro;
+import dev.Pedro.controle_gastos.domain.entity.RendaFixa;
 import dev.Pedro.controle_gastos.domain.repository.InvestimentoRepository;
 import dev.Pedro.controle_gastos.domain.repository.RegistroRepository;
+import dev.Pedro.controle_gastos.domain.repository.RendaFixaRepository;
 import dev.Pedro.controle_gastos.enums.CategoriaRegistro;
 import dev.Pedro.controle_gastos.enums.TipoRegistro;
 import jakarta.transaction.Transactional;
@@ -25,11 +28,15 @@ public class DashboardService {
 
     private final RegistroRepository registroRepository;
     private final InvestimentoRepository investimentoRepository;
+    private final RendaFixaRepository rendaFixaRepository;
 
-    public DashboardService(RegistroRepository registroRepository, InvestimentoRepository investimentoRepository) {
+    public DashboardService(RegistroRepository registroRepository,
+                            InvestimentoRepository investimentoRepository,
+                            RendaFixaRepository rendaFixaRepository) {
+
         this.registroRepository = registroRepository;
         this.investimentoRepository = investimentoRepository;
-
+        this.rendaFixaRepository = rendaFixaRepository;
     }
 
     public DashboardResponse dashboard() {
@@ -104,7 +111,7 @@ public class DashboardService {
     }
 
     public BigDecimal rendimentoTotal() {
-        return somaRendimentos(investimentoRepository.findAll());
+        return somaRendimentos(rendaFixaRepository.findAll());
     }
 
     public BigDecimal entradaMensal() {
@@ -179,20 +186,20 @@ public class DashboardService {
         BigDecimal total = BigDecimal.ZERO;
 
         for (Investimento investimento : investimentos) {
-
             total = total.add(investimento.getValorAplicado());
-
         }
 
         return total;
     }
-    private BigDecimal somaRendimentos(List<Investimento> investimentos) {
+
+    private BigDecimal somaRendimentos(List<RendaFixa> rendasFixas) {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        for (Investimento investimento : investimentos) {
-            total = total.add(calcularRendimento(investimento));
+        for (RendaFixa rendaFixa : rendasFixas) {
+            total = total.add(calcularRendimento(rendaFixa));
         }
+
         return total;
     }
 
@@ -276,7 +283,7 @@ public class DashboardService {
         LocalDate inicio = hoje.withDayOfMonth(1);
         LocalDate fim = hoje.withDayOfMonth(hoje.lengthOfMonth());
 
-        return somaRendimentos(investimentoRepository.findByDataBetween(inicio,fim));
+        return somaRendimentos(rendaFixaRepository.findByDataBetween(inicio,fim));
 
     }
 
