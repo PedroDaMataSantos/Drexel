@@ -1,8 +1,6 @@
 package dev.Pedro.controle_gastos.api.dto;
 
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
-import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

@@ -1,8 +1,6 @@
 package dev.Pedro.controle_gastos.api.dto;
 
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
-import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
-import dev.Pedro.controle_gastos.enums.TipoInvestimento;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
