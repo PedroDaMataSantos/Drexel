@@ -1,10 +1,13 @@
 package dev.Pedro.controle_gastos.api.service.crud;
 
-import dev.Pedro.controle_gastos.api.dto.InvestimentoRequest;
-import dev.Pedro.controle_gastos.api.dto.InvestimentoResponse;
+import dev.Pedro.controle_gastos.api.dto.RendaFixaRequest;
+import dev.Pedro.controle_gastos.api.dto.RendaFixaResponse;
+import dev.Pedro.controle_gastos.api.service.RendaFixaService;
+import dev.Pedro.controle_gastos.domain.repository.InvestimentoRepository;
 import dev.Pedro.controle_gastos.enums.CategoriaInvestimento;
 import dev.Pedro.controle_gastos.enums.PeriodicidadeTaxa;
-import dev.Pedro.controle_gastos.enums.TipoInvestimento;
+import jakarta.validation.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,286 +16,194 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-
 class InvestimentoCrudTest {
+
     @Autowired
     private WebTestClient webTestClient;
 
+    @Autowired
+    private RendaFixaService rendaFixaService;
+
+    @Autowired
+    private InvestimentoRepository investimentoRepository;
+
+    @BeforeEach
+    void limparInvestimentos() {
+        // As requisições HTTP usam outra transação; cada teste começa com o banco limpo.
+        investimentoRepository.deleteAll();
+    }
+
     @Test
-    void testCreateInvestimentoSucess() {
-        var request = new InvestimentoRequest(
-                "teste automatizado",
-                new BigDecimal(1000),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.105"),
-                PeriodicidadeTaxa.ANUAL);
+    void testCreateInvestimentoSuccess() {
+        var request = requestValido("teste automatizado");
 
-        webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .jsonPath("$.descricao").isEqualTo(request.descricao())
-                .jsonPath("$.valorAplicado").isEqualTo(request.valorAplicado())
-                .jsonPath("$.data").isEqualTo(request.data().toString())
-                .jsonPath("$.categoria").isEqualTo(request.categoria().toString())
-                .jsonPath("$.tipo").isEqualTo(request.tipo().toString())
-                .jsonPath("$.taxaJuros").isEqualTo(request.taxaJuros())
-                .jsonPath("$.periodicidadeTaxa").isEqualTo(request.periodicidadeTaxa().toString())
-                .jsonPath("$.isentoIR").isEqualTo(false);
+        // Ainda não há endpoint de criação de renda fixa; testamos o service real.
+        var criado = assertInstanceOf(RendaFixaResponse.class, rendaFixaService.create(request));
 
+        assertNotNull(criado.id());
+        assertEquals(request.descricao(), criado.descricao());
+        assertEquals(0, request.valorAplicado().compareTo(criado.valorAplicado()));
+        assertEquals(0, request.valorAplicado().compareTo(criado.saldoAtual()));
+        assertEquals(request.data(), criado.data());
+        assertEquals(request.categoria(), criado.categoria());
+        assertFalse(criado.isAporte());
+        assertFalse(criado.isentoIR());
+        assertEquals(0, request.taxaJuros().compareTo(criado.taxaJuros()));
+        assertEquals(request.periodicidadeTaxa(), criado.periodicidadeTaxa());
+        assertTrue(investimentoRepository.existsById(criado.id()));
     }
 
     @Test
     void testCreateInvestimentoFailure() {
-        var request = new InvestimentoRequest(
-                "teste automatizado",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null);
+        var request = new RendaFixaRequest(
+                "valor inválido", new BigDecimal("-100.00"), LocalDate.now(),
+                CategoriaInvestimento.CDB, false, new BigDecimal("0.15"),
+                PeriodicidadeTaxa.ANUAL);
 
-        webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().is5xxServerError();
+        RuntimeException erro = assertThrows(RuntimeException.class,
+                () -> rendaFixaService.create(request));
+
+        assertErroDeValidacao(erro, "valorAplicado");
+        assertEquals(0L, investimentoRepository.count());
     }
 
     @Test
-    void testUpdateInvestimentoSucess() {
-        var request = new InvestimentoRequest(
-                "",
-                new BigDecimal(100),
-                LocalDate.now(),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.105"),
-                PeriodicidadeTaxa.ANUAL
-        );
-
-        InvestimentoResponse criado = webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
-
-
-        var requestAtualizado = new InvestimentoRequest(
-                "descricao atualizada",
-                new BigDecimal(2000),
-                LocalDate.of(2026, 6, 1),
-                CategoriaInvestimento.LCI,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.09"),
+    void testUpdateInvestimentoSuccess() {
+        var inicial = requestValido("investimento original");
+        var criado = rendaFixaService.create(inicial);
+        var requestAtualizado = new RendaFixaRequest(
+                "descricao atualizada", new BigDecimal("2000.00"), LocalDate.now(),
+                CategoriaInvestimento.LCI, false, new BigDecimal("0.09"),
                 PeriodicidadeTaxa.MENSAL);
 
-        webTestClient
-                .put()
-                .uri("/scontg/investimentos/" + criado.id())
-                .bodyValue(requestAtualizado)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.descricao").isEqualTo(requestAtualizado.descricao())
-                .jsonPath("$.categoria").isEqualTo(requestAtualizado.categoria().toString())
-                .jsonPath("$.isentoIR").isEqualTo(true);
+        rendaFixaService.update(criado.id(), requestAtualizado);
+
+        // A consulta HTTP confirma que a atualização foi persistida.
+        var atualizado = buscarPorId(criado.id());
+        assertEquals(requestAtualizado.descricao(), atualizado.descricao());
+        assertEquals(requestAtualizado.data(), atualizado.data());
+        assertEquals(CategoriaInvestimento.LCI, atualizado.categoria());
+        assertTrue(atualizado.isentoIR());
+        assertEquals(0, requestAtualizado.taxaJuros().compareTo(atualizado.taxaJuros()));
+        assertEquals(PeriodicidadeTaxa.MENSAL, atualizado.periodicidadeTaxa());
+        // Atualizar os dados não deve substituir o valor originalmente aplicado.
+        assertEquals(0, inicial.valorAplicado().compareTo(atualizado.valorAplicado()));
+        assertEquals(0, inicial.valorAplicado().compareTo(atualizado.saldoAtual()));
     }
 
     @Test
     void testUpdateFailsWhenFieldsAreInvalid() {
-        var requestInicial = new InvestimentoRequest(
-                "investimento original",
-                new BigDecimal("500.00"),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.15"),
-                PeriodicidadeTaxa.ANUAL
-        );
+        var inicial = requestValido("investimento original");
+        var criado = rendaFixaService.create(inicial);
+        var invalido = new RendaFixaRequest(
+                "alteração inválida", inicial.valorAplicado(), inicial.data(),
+                CategoriaInvestimento.CDB, false, new BigDecimal("-0.05"),
+                PeriodicidadeTaxa.ANUAL);
 
-        InvestimentoResponse criado = webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(requestInicial)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
+        RuntimeException erro = assertThrows(RuntimeException.class,
+                () -> rendaFixaService.update(criado.id(), invalido));
 
-        var requestInvalido = new InvestimentoRequest(
-                null,
-                new BigDecimal("-100.00"),
-                null,
-                null,
-                null,
-                new BigDecimal("-0.05"),
-                null
-        );
-
-        webTestClient
-                .put()
-                .uri("/scontg/investimentos/{id}", criado.id())
-                .bodyValue(requestInvalido)
-                .exchange()
-                .expectStatus().is5xxServerError();
+        assertErroDeValidacao(erro, "taxaJuros");
+        var persistido = buscarPorId(criado.id());
+        assertEquals(inicial.descricao(), persistido.descricao());
+        assertEquals(0, inicial.taxaJuros().compareTo(persistido.taxaJuros()));
     }
 
     @Test
     void testUpdateFailsWhenIdIsInvalid() {
-        Long id = Long.MAX_VALUE;
+        RuntimeException erro = assertThrows(RuntimeException.class,
+                () -> rendaFixaService.update(Long.MAX_VALUE, requestValido("inexistente")));
 
-        var request = new InvestimentoRequest(
-                "investimento original",
-                new BigDecimal("500.00"),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.15"),
-                PeriodicidadeTaxa.ANUAL
-        );
-
-        webTestClient
-                .put()
-                .uri("/scontg/investimentos/{id}", id)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().is5xxServerError();
+        assertEquals("Investimento não encontrado", erro.getMessage());
+        assertEquals(0L, investimentoRepository.count());
     }
 
     @Test
     void testGetInvestimentoByIdSuccess() {
-        var request = new InvestimentoRequest(
-                "investimento para consulta",
-                new BigDecimal("500.00"),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.15"),
-                PeriodicidadeTaxa.ANUAL
-        );
+        var request = requestValido("investimento para consulta");
+        var criado = rendaFixaService.create(request);
 
-        InvestimentoResponse criado = webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
+        var encontrado = buscarPorId(criado.id());
 
-        webTestClient
-                .get()
-                .uri("/scontg/investimentos/{id}", criado.id())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.id").isEqualTo(criado.id().intValue())
-                .jsonPath("$.descricao").isEqualTo(request.descricao())
-                .jsonPath("$.categoria").isEqualTo(request.categoria().toString());
+        assertEquals(criado.id(), encontrado.id());
+        assertEquals(request.descricao(), encontrado.descricao());
+        assertEquals(request.categoria(), encontrado.categoria());
+        assertFalse(encontrado.isAporte());
+        assertNotNull(encontrado.valorAplicado(), "O valor aplicado deve ser recuperado do banco");
+        assertEquals(0, request.valorAplicado().compareTo(encontrado.valorAplicado()));
     }
 
     @Test
     void testGetInvestimentoAll() {
-        var request1 = new InvestimentoRequest(
-                "investimento para consulta",
-                new BigDecimal("500.00"),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.15"),
-                PeriodicidadeTaxa.ANUAL
-        );
+        var criado1 = rendaFixaService.create(requestValido("primeiro"));
+        var criado2 = rendaFixaService.create(requestValido("segundo"));
+        var criado3 = rendaFixaService.create(requestValido("terceiro"));
 
-        var request2 = new InvestimentoRequest(
-                "investimento original",
-                new BigDecimal("500.00"),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.15"),
-                PeriodicidadeTaxa.ANUAL
-        );
-        var request3 = new InvestimentoRequest(
-                "teste automatizado",
-                new BigDecimal(1000),
-                LocalDate.of(2026, 1, 1),
-                CategoriaInvestimento.CDB,
-                TipoInvestimento.INVESTIMENTO,
-                new BigDecimal("0.105"),
-                PeriodicidadeTaxa.ANUAL
-        );
-
-        InvestimentoResponse criado1 = webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request1)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
-
-        InvestimentoResponse criado2 = webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request2)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
-
-        InvestimentoResponse criado3 = webTestClient
-                .post()
-                .uri("/scontg/investimentos")
-                .bodyValue(request3)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
-
-
-        List<InvestimentoResponse> investimentos = webTestClient
-                .get()
+        // Usamos o DTO concreto: InvestimentoResponse agora é uma interface.
+        var investimentos = webTestClient.get()
                 .uri("/scontg/investimentos")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(InvestimentoResponse.class)
-                .returnResult()
-                .getResponseBody();
+                .expectBodyList(RendaFixaResponse.class)
+                .hasSize(3)
+                .returnResult().getResponseBody();
 
-        List<Long> ids = investimentos.stream()
-                .map(InvestimentoResponse::id)
-                .toList();
-
-        assertTrue(ids.containsAll(List.of(criado1.id(), criado2.id(), criado3.id())));
-
-
+        assertNotNull(investimentos);
+        var ids = investimentos.stream().map(RendaFixaResponse::id).toList();
+        assertTrue(ids.contains(criado1.id()));
+        assertTrue(ids.contains(criado2.id()));
+        assertTrue(ids.contains(criado3.id()));
     }
 
-    
+    @Test
+    void testDeleteInvestimentoSuccess() {
+        var criado = rendaFixaService.create(requestValido("investimento para excluir"));
 
+        webTestClient.delete()
+                .uri("/scontg/investimentos/{id}", criado.id())
+                .exchange()
+                .expectStatus().isNoContent();
 
+        assertFalse(investimentoRepository.existsById(criado.id()));
+        webTestClient.get().uri("/scontg/investimentos")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(RendaFixaResponse.class).hasSize(0);
+    }
+
+    private RendaFixaRequest requestValido(String descricao) {
+        return new RendaFixaRequest(
+                descricao, new BigDecimal("500.00"), LocalDate.now(),
+                CategoriaInvestimento.CDB, false, new BigDecimal("0.15"),
+                PeriodicidadeTaxa.ANUAL);
+    }
+
+    private RendaFixaResponse buscarPorId(Long id) {
+        var response = webTestClient.get()
+                .uri("/scontg/investimentos/{id}", id)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(RendaFixaResponse.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(response);
+        return response;
+    }
+
+    private void assertErroDeValidacao(Throwable erro, String campo) {
+        // A validação pode vir encapsulada pelo fechamento da transação.
+        while (erro.getCause() != null) {
+            erro = erro.getCause();
+        }
+        var validacao = assertInstanceOf(ConstraintViolationException.class, erro);
+        assertTrue(validacao.getConstraintViolations().stream()
+                .anyMatch(violacao -> violacao.getPropertyPath().toString().equals(campo)),
+                "A validação deve rejeitar o campo " + campo);
+    }
 }
 
