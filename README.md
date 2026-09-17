@@ -26,7 +26,7 @@ Também permite listar todos os registros e buscar por ID, categoria, tipo, desc
 
 ### Investimentos
 
-Permite cadastrar investimentos diretamente pelo endpoint `POST /scontg/investimentos` nas categorias:
+A aplicação possui suporte a investimentos de renda fixa nas categorias:
 
 - CDB;
 - LCI;
@@ -34,9 +34,7 @@ Permite cadastrar investimentos diretamente pelo endpoint `POST /scontg/investim
 - Poupança;
 - Outros.
 
-No cadastro direto, o investimento recebe automaticamente o tipo `INVESTIMENTO`. A aplicação também permite realizar aportes pelo endpoint `POST /scontg/registros/aportar`, que cria um investimento do tipo `APORTE` a partir do saldo disponível.
-
-Os investimentos podem ser consultados por ID, categoria, tipo ou período, listados, atualizados e excluídos.
+Os aportes são realizados por `POST /scontg/registros/aportar`, que cria um investimento do tipo `APORTE` a partir do saldo disponível. A API também permite listar investimentos, consultá-los por ID, categoria, tipo de aporte ou período e excluí-los.
 
 ### Rendimentos e tributação
 
@@ -52,9 +50,7 @@ Investimentos da categoria `OUTROS` não rendem: a taxa é ajustada automaticame
 
 ### Saque de investimentos
 
-Permite saque parcial ou total de um investimento, desde que o valor seja positivo e não ultrapasse o valor disponível. O saque cria automaticamente um registro de entrada na categoria `INVESTIMENTO`.
-
-Também há uma prévia de saque em `GET /scontg/investimentos/{id}/previsao-saque`, com valor bruto, IOF, IR e valor líquido disponível.
+As regras de saque parcial ou total validam que o valor seja positivo e não ultrapasse o saldo disponível. O cálculo considera valor bruto, IOF, IR e valor líquido. A exposição dessas operações por endpoint ainda não faz parte dos controllers atuais.
 
 ### Dashboard
 
@@ -107,9 +103,46 @@ Fornece uma visão consolidada com:
 
 ## Arquitetura
 
+O projeto utiliza uma organização em camadas, com pacote-base `com.damatapedro.controle_gastos`:
+
 ```text
-Controller → Service → Repository → Banco de dados
+api/controller                 → endpoints REST
+application/service            → casos de uso e regras de aplicação
+application/dto                → contratos de entrada e saída
+application/mapper             → conversão entre entidades e DTOs
+application/calculation        → cálculos de rendimento, tributação e saque
+domain/entity                  → entidades de negócio/JPA
+domain/enumeration             → enumerações do domínio
+infrastructure/repository      → persistência com Spring Data JPA
 ```
+
+Fluxo principal:
+
+```text
+Controller → Application Service → Repository → Banco de dados
+```
+
+## Endpoints disponíveis
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| `POST` | `/scontg/registros` | Cria um registro financeiro. |
+| `POST` | `/scontg/registros/aportar` | Cria um aporte em renda fixa. |
+| `GET` | `/scontg/registros` | Lista os registros. |
+| `GET` | `/scontg/registros/{id}` | Busca um registro por ID. |
+| `GET` | `/scontg/registros/categoria/{categoria}` | Filtra registros por categoria. |
+| `GET` | `/scontg/registros/tipo/{tipo}` | Filtra registros por tipo. |
+| `GET` | `/scontg/registros/descricao/{descricao}` | Filtra registros por descrição. |
+| `GET` | `/scontg/registros/periodo?inicio=&fim=` | Filtra registros por período. |
+| `PUT` | `/scontg/registros/{id}` | Atualiza um registro. |
+| `DELETE` | `/scontg/registros/{id}` | Exclui um registro. |
+| `GET` | `/scontg/investimentos` | Lista os investimentos. |
+| `GET` | `/scontg/investimentos/{id}` | Busca um investimento por ID. |
+| `GET` | `/scontg/investimentos/categoria/{categoria}` | Filtra investimentos por categoria. |
+| `GET` | `/scontg/investimentos/tipo/{isAporte}` | Filtra investimentos por tipo de aporte. |
+| `GET` | `/scontg/investimentos/periodo?inicio=&fim=` | Filtra investimentos por período. |
+| `DELETE` | `/scontg/investimentos/{id}` | Exclui um investimento. |
+| `GET` | `/scontg/dashboard` | Retorna os indicadores consolidados. |
 
 ---
 
@@ -130,8 +163,9 @@ Controller → Service → Repository → Banco de dados
 ## Status do projeto
 
 ```text
-Versão atual: 1.4.3
-Correção: valores negativos passaram a ser rejeitados em registros e investimentos.
+Estrutura atual: arquitetura em camadas.
+Pacote-base: com.damatapedro.controle_gastos.
+Testes automatizados: 9 testes passando.
 ```
 
 ---
