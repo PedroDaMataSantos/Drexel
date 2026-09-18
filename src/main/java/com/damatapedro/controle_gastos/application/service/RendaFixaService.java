@@ -56,8 +56,8 @@ public class RendaFixaService {
         }
 
         rendaFixaExistente.setCategoria(rendaFixaRequest.categoria());
-
-
+        rendaFixaExistente .setPeriodicidadeTaxa(rendaFixaRequest.periodicidadeTaxa());
+        rendaFixaExistente.setTaxaJuros(rendaFixaRequest.taxaJuros());
         rendaFixaExistente.setIsentoIR(rendaFixaRequest.categoria().isIsento());
 
         return mapper.toResponse(repository.save(rendaFixaExistente));
