@@ -14,8 +14,8 @@ public record RendaFixaRequest(
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate data,
         CategoriaInvestimento categoria,
-        boolean isAporte,
         BigDecimal taxaJuros,
         PeriodicidadeTaxa periodicidadeTaxa
-) {
+
+) implements InvestimentoRequest {
 }
