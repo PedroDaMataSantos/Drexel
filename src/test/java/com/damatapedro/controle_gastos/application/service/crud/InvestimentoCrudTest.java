@@ -17,6 +17,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,11 +47,23 @@ class InvestimentoCrudTest {
     void testCreateInvestimentoSuccess() {
         var request = requestValido("teste automatizado");
 
-        var criado = assertInstanceOf(
-                RendaFixaResponse.class,
-                investimentoService.create(request, false)
-        );
+        var criado = webTestClient.post()
+                .uri("/drexel/investimentos")
+                .bodyValue(Map.of(
+                        "tipo", "RENDA_FIXA",
+                        "descricao", request.descricao(),
+                        "valorAplicado", request.valorAplicado(),
+                        "data", request.data().toString(),
+                        "categoria", request.categoria().name(),
+                        "taxaJuros", request.taxaJuros(),
+                        "periodicidadeTaxa", request.periodicidadeTaxa().name()
+                ))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(RendaFixaResponse.class)
+                .returnResult().getResponseBody();
 
+        assertNotNull(criado);
         assertNotNull(criado.id());
         assertEquals(request.descricao(), criado.descricao());
         assertEquals(0, request.valorAplicado().compareTo(criado.valorAplicado()));
@@ -106,9 +119,9 @@ class InvestimentoCrudTest {
         assertEquals(requestAtualizado.data(), atualizado.data());
         assertEquals(CategoriaInvestimento.LCI, atualizado.categoria());
         assertTrue(atualizado.isentoIR());
-        // Taxa, periodicidade e valor aplicado não fazem parte da atualização.
-        assertEquals(0, inicial.taxaJuros().compareTo(atualizado.taxaJuros()));
-        assertEquals(inicial.periodicidadeTaxa(), atualizado.periodicidadeTaxa());
+        assertEquals(0, requestAtualizado.taxaJuros().compareTo(atualizado.taxaJuros()));
+        assertEquals(requestAtualizado.periodicidadeTaxa(), atualizado.periodicidadeTaxa());
+        // O valor originalmente aplicado não faz parte da atualização.
         assertEquals(0, inicial.valorAplicado().compareTo(atualizado.valorAplicado()));
         assertEquals(0, inicial.valorAplicado().compareTo(atualizado.saldoAtual()));
     }
@@ -130,8 +143,8 @@ class InvestimentoCrudTest {
         var persistido = buscarPorId(criado.id());
         assertEquals(atualizado.descricao(), persistido.descricao());
         assertEquals(inicial.data(), persistido.data());
-        assertEquals(0, inicial.taxaJuros().compareTo(persistido.taxaJuros()));
-        assertEquals(inicial.periodicidadeTaxa(), persistido.periodicidadeTaxa());
+        assertEquals(0, atualizado.taxaJuros().compareTo(persistido.taxaJuros()));
+        assertEquals(atualizado.periodicidadeTaxa(), persistido.periodicidadeTaxa());
     }
 
     @Test
