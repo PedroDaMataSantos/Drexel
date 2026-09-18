@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/scontg/investimentos")
+@RequestMapping("/drexel/investimentos")
 
 public class InvestimentoController {
 
@@ -20,6 +20,12 @@ public class InvestimentoController {
 
         this.service = service;
 
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public InvestimentoResponse create(@RequestBody InvestimentoRequest investimento) {
+        return service.create(investimento, false);
     }
 
     @GetMapping("/{id}")

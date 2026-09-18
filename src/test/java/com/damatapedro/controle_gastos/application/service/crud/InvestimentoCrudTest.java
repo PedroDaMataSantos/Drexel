@@ -2,6 +2,7 @@ package com.damatapedro.controle_gastos.application.service.crud;
 
 import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaResponse;
+import com.damatapedro.controle_gastos.application.service.InvestimentoService;
 import com.damatapedro.controle_gastos.application.service.RendaFixaService;
 import com.damatapedro.controle_gastos.infrastructure.repository.InvestimentoRepository;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
@@ -30,6 +31,9 @@ class InvestimentoCrudTest {
     private RendaFixaService rendaFixaService;
 
     @Autowired
+    private InvestimentoService investimentoService;
+
+    @Autowired
     private InvestimentoRepository investimentoRepository;
 
     @BeforeEach
@@ -42,8 +46,10 @@ class InvestimentoCrudTest {
     void testCreateInvestimentoSuccess() {
         var request = requestValido("teste automatizado");
 
-        // Ainda não há endpoint de criação de renda fixa; testamos o service real.
-        var criado = assertInstanceOf(RendaFixaResponse.class, rendaFixaService.create(request));
+        var criado = assertInstanceOf(
+                RendaFixaResponse.class,
+                investimentoService.create(request, false)
+        );
 
         assertNotNull(criado.id());
         assertEquals(request.descricao(), criado.descricao());
@@ -62,23 +68,34 @@ class InvestimentoCrudTest {
     void testCreateInvestimentoFailure() {
         var request = new RendaFixaRequest(
                 "valor inválido", new BigDecimal("-100.00"), LocalDate.now(),
-                CategoriaInvestimento.CDB, false, new BigDecimal("0.15"),
+                CategoriaInvestimento.CDB, new BigDecimal("0.15"),
                 PeriodicidadeTaxa.ANUAL);
 
         RuntimeException erro = assertThrows(RuntimeException.class,
-                () -> rendaFixaService.create(request));
+                () -> rendaFixaService.create(request, false));
 
         assertErroDeValidacao(erro, "valorAplicado");
         assertEquals(0L, investimentoRepository.count());
     }
 
     @Test
+    void testCreateAporteDefineIsAporteComoTrue() {
+        var criado = assertInstanceOf(
+                RendaFixaResponse.class,
+                investimentoService.create(requestValido("aporte automatizado"), true)
+        );
+
+        assertTrue(criado.isAporte());
+        assertTrue(investimentoRepository.existsById(criado.id()));
+    }
+
+    @Test
     void testUpdateInvestimentoSuccess() {
         var inicial = requestValido("investimento original");
-        var criado = rendaFixaService.create(inicial);
+        var criado = rendaFixaService.create(inicial, false);
         var requestAtualizado = new RendaFixaRequest(
                 "descricao atualizada", new BigDecimal("2000.00"), LocalDate.now(),
-                CategoriaInvestimento.LCI, false, new BigDecimal("0.09"),
+                CategoriaInvestimento.LCI, new BigDecimal("0.09"),
                 PeriodicidadeTaxa.MENSAL);
 
         rendaFixaService.update(criado.id(), requestAtualizado);
@@ -99,10 +116,10 @@ class InvestimentoCrudTest {
     @Test
     void testUpdateFailsWhenFieldsAreInvalid() {
         var inicial = requestValido("investimento original");
-        var criado = rendaFixaService.create(inicial);
+        var criado = rendaFixaService.create(inicial, false);
         var invalido = new RendaFixaRequest(
                 "alteração inválida", inicial.valorAplicado(), inicial.data(),
-                CategoriaInvestimento.CDB, false, new BigDecimal("-0.05"),
+                CategoriaInvestimento.CDB, new BigDecimal("-0.05"),
                 PeriodicidadeTaxa.ANUAL);
 
         RuntimeException erro = assertThrows(RuntimeException.class,
@@ -126,7 +143,7 @@ class InvestimentoCrudTest {
     @Test
     void testGetInvestimentoByIdSuccess() {
         var request = requestValido("investimento para consulta");
-        var criado = rendaFixaService.create(request);
+        var criado = rendaFixaService.create(request, false);
 
         var encontrado = buscarPorId(criado.id());
 
@@ -140,13 +157,13 @@ class InvestimentoCrudTest {
 
     @Test
     void testGetInvestimentoAll() {
-        var criado1 = rendaFixaService.create(requestValido("primeiro"));
-        var criado2 = rendaFixaService.create(requestValido("segundo"));
-        var criado3 = rendaFixaService.create(requestValido("terceiro"));
+        var criado1 = rendaFixaService.create(requestValido("primeiro"), false);
+        var criado2 = rendaFixaService.create(requestValido("segundo"), false);
+        var criado3 = rendaFixaService.create(requestValido("terceiro"), false);
 
         // Usamos o DTO concreto: InvestimentoResponse agora é uma interface.
         var investimentos = webTestClient.get()
-                .uri("/scontg/investimentos")
+                .uri("/drexel/investimentos")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(RendaFixaResponse.class)
@@ -162,15 +179,15 @@ class InvestimentoCrudTest {
 
     @Test
     void testDeleteInvestimentoSuccess() {
-        var criado = rendaFixaService.create(requestValido("investimento para excluir"));
+        var criado = rendaFixaService.create(requestValido("investimento para excluir"), false);
 
         webTestClient.delete()
-                .uri("/scontg/investimentos/{id}", criado.id())
+                .uri("/drexel/investimentos/{id}", criado.id())
                 .exchange()
                 .expectStatus().isNoContent();
 
         assertFalse(investimentoRepository.existsById(criado.id()));
-        webTestClient.get().uri("/scontg/investimentos")
+        webTestClient.get().uri("/drexel/investimentos")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(RendaFixaResponse.class).hasSize(0);
@@ -179,13 +196,13 @@ class InvestimentoCrudTest {
     private RendaFixaRequest requestValido(String descricao) {
         return new RendaFixaRequest(
                 descricao, new BigDecimal("500.00"), LocalDate.now(),
-                CategoriaInvestimento.CDB, false, new BigDecimal("0.15"),
+                CategoriaInvestimento.CDB, new BigDecimal("0.15"),
                 PeriodicidadeTaxa.ANUAL);
     }
 
     private RendaFixaResponse buscarPorId(Long id) {
         var response = webTestClient.get()
-                .uri("/scontg/investimentos/{id}", id)
+                .uri("/drexel/investimentos/{id}", id)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(RendaFixaResponse.class)

@@ -1,6 +1,8 @@
 package com.damatapedro.controle_gastos.application.service;
 
+import com.damatapedro.controle_gastos.application.dto.InvestimentoRequest;
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
+import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
 import com.damatapedro.controle_gastos.application.mapper.InvestimentoMapper;
 import com.damatapedro.controle_gastos.domain.entity.Investimento;
 import com.damatapedro.controle_gastos.infrastructure.repository.InvestimentoRepository;
@@ -21,14 +23,27 @@ public class InvestimentoService {
 
     private final InvestimentoRepository repository;
     private final InvestimentoMapper mapper;
+    private final RendaFixaService rendaFixaService;
 
-    public InvestimentoService(InvestimentoRepository repository, InvestimentoMapper mapper) {
+    public InvestimentoService(InvestimentoRepository repository, InvestimentoMapper mapper, RendaFixaService rendaFixaService) {
         this.repository = repository;
         this.mapper = mapper;
+        this.rendaFixaService = rendaFixaService;
     }
 
+    public InvestimentoResponse create(InvestimentoRequest request, boolean isAporte) {
+        return switch (request) {
+            case RendaFixaRequest rendaFixa ->
+                    rendaFixaService.create(rendaFixa, isAporte);
 
+//            case RendaVariavelRequest rendaVariavel ->
+//                    rendaVariavelService.create(rendaVariavel, isAporte);
 
+            default -> throw new IllegalArgumentException(
+                    "Tipo de investimento não suportado."
+            );
+        };
+    }
 
     public void delete(Long id) {
 
