@@ -106,29 +106,32 @@ class InvestimentoCrudTest {
         assertEquals(requestAtualizado.data(), atualizado.data());
         assertEquals(CategoriaInvestimento.LCI, atualizado.categoria());
         assertTrue(atualizado.isentoIR());
-        assertEquals(0, requestAtualizado.taxaJuros().compareTo(atualizado.taxaJuros()));
-        assertEquals(PeriodicidadeTaxa.MENSAL, atualizado.periodicidadeTaxa());
-        // Atualizar os dados não deve substituir o valor originalmente aplicado.
+        // Taxa, periodicidade e valor aplicado não fazem parte da atualização.
+        assertEquals(0, inicial.taxaJuros().compareTo(atualizado.taxaJuros()));
+        assertEquals(inicial.periodicidadeTaxa(), atualizado.periodicidadeTaxa());
         assertEquals(0, inicial.valorAplicado().compareTo(atualizado.valorAplicado()));
         assertEquals(0, inicial.valorAplicado().compareTo(atualizado.saldoAtual()));
     }
 
     @Test
-    void testUpdateFailsWhenFieldsAreInvalid() {
-        var inicial = requestValido("investimento original");
-        var criado = rendaFixaService.create(inicial, false);
-        var invalido = new RendaFixaRequest(
-                "alteração inválida", inicial.valorAplicado(), inicial.data(),
-                CategoriaInvestimento.CDB, new BigDecimal("-0.05"),
+    void testUpdatePreservaDataQuandoRequestNaoInforma() {
+        var inicial = new RendaFixaRequest(
+                "investimento original", new BigDecimal("500.00"), LocalDate.now().minusDays(10),
+                CategoriaInvestimento.CDB, new BigDecimal("0.15"),
                 PeriodicidadeTaxa.ANUAL);
+        var criado = rendaFixaService.create(inicial, false);
+        var atualizado = new RendaFixaRequest(
+                "descrição atualizada", inicial.valorAplicado(), null,
+                CategoriaInvestimento.LCI, new BigDecimal("0.09"),
+                PeriodicidadeTaxa.MENSAL);
 
-        RuntimeException erro = assertThrows(RuntimeException.class,
-                () -> rendaFixaService.update(criado.id(), invalido));
+        rendaFixaService.update(criado.id(), atualizado);
 
-        assertErroDeValidacao(erro, "taxaJuros");
         var persistido = buscarPorId(criado.id());
-        assertEquals(inicial.descricao(), persistido.descricao());
+        assertEquals(atualizado.descricao(), persistido.descricao());
+        assertEquals(inicial.data(), persistido.data());
         assertEquals(0, inicial.taxaJuros().compareTo(persistido.taxaJuros()));
+        assertEquals(inicial.periodicidadeTaxa(), persistido.periodicidadeTaxa());
     }
 
     @Test

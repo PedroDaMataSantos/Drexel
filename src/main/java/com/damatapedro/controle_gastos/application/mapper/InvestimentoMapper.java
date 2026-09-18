@@ -10,7 +10,7 @@ import static com.damatapedro.controle_gastos.application.calculation.PrevisaoSa
 import static com.damatapedro.controle_gastos.application.calculation.RendimentoCalculator.calcularRendimento;
 
 @Component
-public class InvestimentoMapper {
+public class    InvestimentoMapper {
 
     public InvestimentoResponse toResponse(Investimento investimento) {
         return switch (investimento) {

@@ -57,14 +57,6 @@ public class RendaFixaService {
 
         rendaFixaExistente.setCategoria(rendaFixaRequest.categoria());
 
-        if (rendaFixaRequest.categoria() != CategoriaInvestimento.OUTROS) {
-            rendaFixaExistente.setTaxaJuros(rendaFixaRequest.taxaJuros());
-
-            rendaFixaExistente.setPeriodicidadeTaxa(rendaFixaRequest.periodicidadeTaxa());
-
-        }else{
-            ajustarTaxaPeridiocidadeAutomaticamente(rendaFixaExistente,rendaFixaRequest.categoria());
-        }
 
         rendaFixaExistente.setIsentoIR(rendaFixaRequest.categoria().isIsento());
 
@@ -118,16 +110,6 @@ public class RendaFixaService {
         return calcularInformacoesSaque(rendaFixa);
     }
 
-    private void ajustarTaxaPeridiocidadeAutomaticamente(RendaFixa rendaFixa, CategoriaInvestimento categoria) {
-        if (categoria == CategoriaInvestimento.OUTROS) {
-            rendaFixa.setTaxaJuros(BigDecimal.ZERO);
-            rendaFixa.setPeriodicidadeTaxa(null);
-        }
-    }
-
-
-
-
     private RendaFixa toEntity(RendaFixaRequest rendaFixaRequest, boolean isAporte) {
 
         LocalDate data = rendaFixaRequest.data()==null
@@ -145,9 +127,6 @@ public class RendaFixaService {
                 rendaFixaRequest.categoria().isIsento(),
                 rendaFixaRequest.taxaJuros(),
                 rendaFixaRequest.periodicidadeTaxa());
-
-        ajustarTaxaPeridiocidadeAutomaticamente(
-                rendafixa,rendaFixaRequest.categoria());
 
         return rendafixa;
     }
