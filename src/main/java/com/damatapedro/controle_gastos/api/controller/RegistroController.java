@@ -1,23 +1,21 @@
 package com.damatapedro.controle_gastos.api.controller;
 
 
+import com.damatapedro.controle_gastos.application.dto.InvestimentoRequest;
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
 import com.damatapedro.controle_gastos.application.dto.RegistroRequest;
 import com.damatapedro.controle_gastos.application.dto.RegistroResponse;
 import com.damatapedro.controle_gastos.application.service.RegistroService;
-import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
-import com.damatapedro.controle_gastos.domain.enumeration.PeriodicidadeTaxa;
 import com.damatapedro.controle_gastos.domain.enumeration.TipoRegistro;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/scontg/registros")
+@RequestMapping("/drexel/registros")
 
 public class RegistroController {
 
@@ -36,13 +34,8 @@ public class RegistroController {
 
     @PostMapping("/aportar")
     @ResponseStatus(HttpStatus.CREATED)
-    public InvestimentoResponse investir(@RequestParam BigDecimal valor,
-                                         @RequestParam CategoriaInvestimento categoria,
-                                         @RequestParam String descricao,
-                                         @RequestParam BigDecimal taxaJuros,
-                                         @RequestParam PeriodicidadeTaxa periodicidadeTaxa) {
-
-        return service.investir(valor, categoria, descricao, taxaJuros, periodicidadeTaxa);
+    public InvestimentoResponse investir(@RequestBody InvestimentoRequest request) {
+        return service.investir(request);
     }
 
     @PutMapping("/{id}")
