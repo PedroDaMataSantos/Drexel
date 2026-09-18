@@ -2,18 +2,14 @@ package com.damatapedro.controle_gastos.application.service;
 
 
 
+import com.damatapedro.controle_gastos.application.dto.InvestimentoRequest;
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
 import com.damatapedro.controle_gastos.application.dto.RegistroRequest;
 import com.damatapedro.controle_gastos.application.dto.RegistroResponse;
-import com.damatapedro.controle_gastos.application.dto.RendaFixaResponse;
-import com.damatapedro.controle_gastos.application.mapper.InvestimentoMapper;
-
 import com.damatapedro.controle_gastos.domain.entity.Registro;
-import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
-
+import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
+import com.damatapedro.controle_gastos.domain.enumeration.TipoRegistro;
 import com.damatapedro.controle_gastos.infrastructure.repository.RegistroRepository;
-import com.damatapedro.controle_gastos.infrastructure.repository.RendaFixaRepository;
-import com.damatapedro.controle_gastos.domain.enumeration.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,17 +25,15 @@ public class RegistroService {
 
 
     private final RegistroRepository repository;
-    private final RendaFixaRepository rendaFixaRepository;
+    private final InvestimentoService investimentoService;
     private final DashboardService dashboardService;
-    private final InvestimentoMapper mapper;
 
-    public RegistroService(RegistroRepository repository, RendaFixaRepository rendaFixaRepository,
-                           DashboardService dashboardService, InvestimentoMapper mapper) {
-
+    public RegistroService(RegistroRepository repository,
+                           InvestimentoService investimentoService,
+                           DashboardService dashboardService) {
         this.repository = repository;
-        this.rendaFixaRepository = rendaFixaRepository;
+        this.investimentoService = investimentoService;
         this.dashboardService = dashboardService;
-        this.mapper = mapper;
     }
 
     //Create
@@ -134,28 +128,14 @@ public class RegistroService {
 
 
 
-    public InvestimentoResponse investir(BigDecimal valorAplicado,
-                                      CategoriaInvestimento categoria,
-                                      String descricao,
-                                      BigDecimal taxaJuros,
-                                      PeriodicidadeTaxa periodicidadeTaxa) {
+    public InvestimentoResponse investir(InvestimentoRequest request) {
+        BigDecimal valor = request.valorAplicado();
 
-        if (valorAplicado.compareTo(BigDecimal.ZERO) <= 0 || valorAplicado.compareTo(dashboardService.saldoTotal()) > 0) {
+        if (valor.compareTo(BigDecimal.ZERO) <= 0 || valor.compareTo(dashboardService.saldoTotal()) > 0) {
             throw new RuntimeException("O valor deve ser maior que zero.");
         }
 
-
-        RendaFixa rendaFixa = new RendaFixa(
-                descricao,
-                valorAplicado,
-                LocalDate.now(),
-                categoria,
-                true,
-                categoria.isIsento(),
-                taxaJuros,
-                periodicidadeTaxa);
-
-        return mapper.toResponse(rendaFixaRepository.save(rendaFixa));
+        return investimentoService.create(request, true);
     }
 
 

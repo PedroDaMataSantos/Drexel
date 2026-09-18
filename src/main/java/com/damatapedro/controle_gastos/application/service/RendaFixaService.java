@@ -36,9 +36,8 @@ public class RendaFixaService {
     }
 
 
-    public InvestimentoResponse create(RendaFixaRequest rendaFixaRequest) {
-
-        RendaFixa rendaFixa = toEntity(rendaFixaRequest);
+    public InvestimentoResponse create(RendaFixaRequest rendaFixaRequest, boolean isAporte) {
+        RendaFixa rendaFixa = toEntity(rendaFixaRequest, isAporte);
 
         return mapper.toResponse(repository.save(rendaFixa));
     }
@@ -73,7 +72,7 @@ public class RendaFixaService {
     }
 
 
-    //Ele tem que criar manualmente o Response porque se ele chamr o RegistroSercvice como o RegistroService chama essa classe , eles criam um loop e o spring trava
+    // Cria o response diretamente para evitar dependência circular com RegistroService.
     public RegistroResponse sacar(Long id, BigDecimal valor) {
 
         RendaFixa rendaFixaExistente = repository.findById(id).
@@ -129,7 +128,7 @@ public class RendaFixaService {
 
 
 
-    private RendaFixa toEntity(RendaFixaRequest rendaFixaRequest) {
+    private RendaFixa toEntity(RendaFixaRequest rendaFixaRequest, boolean isAporte) {
 
         LocalDate data = rendaFixaRequest.data()==null
                 ? LocalDate.now()
@@ -142,7 +141,7 @@ public class RendaFixaService {
                 rendaFixaRequest.valorAplicado(),
                 data,
                 rendaFixaRequest.categoria(),
-                rendaFixaRequest.isAporte(),
+                isAporte,
                 rendaFixaRequest.categoria().isIsento(),
                 rendaFixaRequest.taxaJuros(),
                 rendaFixaRequest.periodicidadeTaxa());
