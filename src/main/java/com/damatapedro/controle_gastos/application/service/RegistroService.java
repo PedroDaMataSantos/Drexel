@@ -139,8 +139,6 @@ public class RegistroService {
     }
 
 
-
-
     //Valida se a Categoria de registro é compatível ao Tipo
 
     public void validarCategoria_Tipo(RegistroRequest registroRequest) {

@@ -3,6 +3,7 @@ package com.damatapedro.controle_gastos.application.service.crud;
 import com.damatapedro.controle_gastos.application.dto.RegistroRequest;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaResponse;
+import com.damatapedro.controle_gastos.application.service.DashboardService;
 import com.damatapedro.controle_gastos.application.service.RegistroService;
 import com.damatapedro.controle_gastos.application.service.RendaFixaService;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
@@ -32,6 +33,9 @@ class RendaFixaFluxosTest {
 
     @Autowired
     private RegistroService registroService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     @Autowired
     private RendaFixaRepository rendaFixaRepository;
@@ -64,6 +68,8 @@ class RendaFixaFluxosTest {
 
         assertTrue(response.isAporte());
         assertEquals(0, new BigDecimal("400.00").compareTo(response.valorAplicado()));
+        assertEquals(0, new BigDecimal("400.00").compareTo(dashboardService.aporte()));
+        assertEquals(0, new BigDecimal("600.00").compareTo(dashboardService.saldoTotal()));
         assertTrue(investimentoRepository.existsById(response.id()));
         assertEquals(1, registroRepository.count());
     }

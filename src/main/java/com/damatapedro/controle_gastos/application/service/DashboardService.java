@@ -111,8 +111,10 @@ public class DashboardService {
     }
 
     public BigDecimal rendimentoTotal() {
+
         return somaRendimentos(rendaFixaRepository.findAll());
     }
+
 
     public BigDecimal entradaMensal() {
 
