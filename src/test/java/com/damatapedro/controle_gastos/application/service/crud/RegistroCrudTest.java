@@ -1,6 +1,7 @@
 package com.damatapedro.controle_gastos.application.service.crud;
 
 import com.damatapedro.controle_gastos.application.dto.RegistroRequest;
+import com.damatapedro.controle_gastos.application.exception.TipoRegistroInvalidoException;
 import com.damatapedro.controle_gastos.application.service.RegistroService;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
 import com.damatapedro.controle_gastos.domain.enumeration.TipoRegistro;
@@ -108,7 +109,7 @@ class RegistroCrudTest {
                 LocalDate.now()
         );
 
-        var erro = assertThrows(RuntimeException.class, () -> registroService.create(request));
+        var erro = assertThrows(TipoRegistroInvalidoException.class, () -> registroService.create(request));
 
         assertEquals("Essa categoria é incompatível com o tipo de registro selecionado", erro.getMessage());
         assertEquals(0, registroRepository.count());

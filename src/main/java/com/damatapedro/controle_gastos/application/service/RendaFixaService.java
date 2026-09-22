@@ -1,12 +1,14 @@
 package com.damatapedro.controle_gastos.application.service;
 
 import com.damatapedro.controle_gastos.application.dto.*;
+import com.damatapedro.controle_gastos.application.exception.InvestimentoNotFoundException;
+import com.damatapedro.controle_gastos.application.exception.ValorInvalidoException;
+import com.damatapedro.controle_gastos.application.exception.ValorResgateInsuficienteException;
 import com.damatapedro.controle_gastos.application.mapper.InvestimentoMapper;
 import com.damatapedro.controle_gastos.domain.entity.Registro;
 import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
 import com.damatapedro.controle_gastos.infrastructure.repository.RegistroRepository;
 import com.damatapedro.controle_gastos.infrastructure.repository.RendaFixaRepository;
-import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
 import com.damatapedro.controle_gastos.domain.enumeration.TipoRegistro;
 import jakarta.transaction.Transactional;
@@ -46,12 +48,11 @@ public class RendaFixaService {
     public InvestimentoResponse update(Long id, RendaFixaRequest rendaFixaRequest) {
 
         RendaFixa rendaFixaExistente = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
+                .orElseThrow(() -> new InvestimentoNotFoundException());
 
         rendaFixaExistente.setDescricao(rendaFixaRequest.descricao());
 
         if (rendaFixaRequest.data() != null) {
-
             rendaFixaExistente.setData(rendaFixaRequest.data());
         }
 
@@ -68,15 +69,22 @@ public class RendaFixaService {
     public RegistroResponse sacar(Long id, BigDecimal valor) {
 
         RendaFixa rendaFixaExistente = repository.findById(id).
-                orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
+                orElseThrow(() -> new InvestimentoNotFoundException());
 
         BigDecimal disponivel = valorDisponivelSaque(rendaFixaExistente);
 
-        if (disponivel.compareTo(valor) < 0 || valor.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Valor inválido");
-        }
+    if ( valor.compareTo(BigDecimal.ZERO) <= 0) {
+        throw new ValorInvalidoException();
+    }
 
-        rendaFixaExistente.setSaldoAtual(disponivel.subtract(valor));   // reusa
+    if (disponivel.compareTo(valor) < 0 ) {
+        throw new ValorResgateInsuficienteException("O valor disponivel para saque é menor que o valor digitado. Disponivel:"
+                + disponivel);
+    }
+
+
+
+        rendaFixaExistente.setSaldoAtual(disponivel.subtract(valor));
         rendaFixaExistente.setUltimoSaque(LocalDate.now());
 
         repository.save(rendaFixaExistente);
@@ -105,7 +113,7 @@ public class RendaFixaService {
     public PrevisaoSaqueResponse previsaoSaque(Long id) {
 
         RendaFixa rendaFixa = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
+                .orElseThrow(() -> new InvestimentoNotFoundException());
 
         return calcularInformacoesSaque(rendaFixa);
     }

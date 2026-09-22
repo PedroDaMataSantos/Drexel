@@ -3,6 +3,8 @@ package com.damatapedro.controle_gastos.application.service;
 import com.damatapedro.controle_gastos.application.dto.InvestimentoRequest;
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
+import com.damatapedro.controle_gastos.application.exception.InvestimentoNotFoundException;
+import com.damatapedro.controle_gastos.application.exception.TipoInvestimentoInvalidoException;
 import com.damatapedro.controle_gastos.application.mapper.InvestimentoMapper;
 import com.damatapedro.controle_gastos.domain.entity.Investimento;
 import com.damatapedro.controle_gastos.infrastructure.repository.InvestimentoRepository;
@@ -39,7 +41,7 @@ public class InvestimentoService {
 //            case RendaVariavelRequest rendaVariavel ->
 //                    rendaVariavelService.create(rendaVariavel, isAporte);
 
-            default -> throw new IllegalArgumentException(
+            default -> throw new TipoInvestimentoInvalidoException(
                     "Tipo de investimento não suportado."
             );
         };
@@ -48,10 +50,8 @@ public class InvestimentoService {
     public void delete(Long id) {
 
         if (!repository.existsById(id)) {
-
-            throw new RuntimeException("Investimento não encontrada. id=" + id);
+            throw new InvestimentoNotFoundException("Investimento não encontrada. id=" + id);
         }
-
 
         repository.deleteById(id);
 
@@ -60,7 +60,7 @@ public class InvestimentoService {
     public InvestimentoResponse findById(Long id) {
 
         Investimento investimento = repository.findById(id).
-                orElseThrow(() -> new RuntimeException("Investimento não encontrado"));
+                orElseThrow(() -> new InvestimentoNotFoundException("Investimento não encontrado"));
 
 
         return mapper.toResponse(investimento);

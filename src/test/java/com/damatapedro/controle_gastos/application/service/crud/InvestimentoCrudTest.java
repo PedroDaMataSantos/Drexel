@@ -2,6 +2,7 @@ package com.damatapedro.controle_gastos.application.service.crud;
 
 import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaResponse;
+import com.damatapedro.controle_gastos.application.exception.InvestimentoNotFoundException;
 import com.damatapedro.controle_gastos.application.service.InvestimentoService;
 import com.damatapedro.controle_gastos.application.service.RendaFixaService;
 import com.damatapedro.controle_gastos.infrastructure.repository.InvestimentoRepository;
@@ -149,10 +150,10 @@ class InvestimentoCrudTest {
 
     @Test
     void testUpdateFailsWhenIdIsInvalid() {
-        RuntimeException erro = assertThrows(RuntimeException.class,
+        InvestimentoNotFoundException erro = assertThrows(InvestimentoNotFoundException.class,
                 () -> rendaFixaService.update(Long.MAX_VALUE, requestValido("inexistente")));
 
-        assertEquals("Investimento não encontrado", erro.getMessage());
+        assertEquals("Investimento não encontrado!", erro.getMessage());
         assertEquals(0L, investimentoRepository.count());
     }
 

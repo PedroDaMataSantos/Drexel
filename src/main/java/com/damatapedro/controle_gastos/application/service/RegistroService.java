@@ -6,6 +6,10 @@ import com.damatapedro.controle_gastos.application.dto.InvestimentoRequest;
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
 import com.damatapedro.controle_gastos.application.dto.RegistroRequest;
 import com.damatapedro.controle_gastos.application.dto.RegistroResponse;
+import com.damatapedro.controle_gastos.application.exception.RegistroNotFoundException;
+import com.damatapedro.controle_gastos.application.exception.SaldoInsuficienteException;
+import com.damatapedro.controle_gastos.application.exception.TipoRegistroInvalidoException;
+import com.damatapedro.controle_gastos.application.exception.ValorInvalidoException;
 import com.damatapedro.controle_gastos.domain.entity.Registro;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
 import com.damatapedro.controle_gastos.domain.enumeration.TipoRegistro;
@@ -55,7 +59,7 @@ public class RegistroService {
 
         //Valida se o registro existe e retorna o erro
         Registro registroExistente = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Registro não encontrado"));
+                .orElseThrow(() -> new RegistroNotFoundException("Registro não encontrado"));
 
         //Update
         registroExistente.setTipoRegistro(registroRequest.tipoRegistro());
@@ -80,7 +84,7 @@ public class RegistroService {
 
         //Verifica se existe
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Registro não encontrada. id=" + id);
+            throw new RegistroNotFoundException("Registro não encontrada. id=" + id);
         }
         repository.deleteById(id);
     }
@@ -90,7 +94,7 @@ public class RegistroService {
     public RegistroResponse findById(Long id) {
 
         Registro registro = repository.findById(id).
-                orElseThrow(() -> new RuntimeException("Registro não encontrado"));
+                orElseThrow(() -> new RegistroNotFoundException());
 
         return toResponse(registro);
 
@@ -129,10 +133,15 @@ public class RegistroService {
 
 
     public InvestimentoResponse investir(InvestimentoRequest request) {
+        
         BigDecimal valor = request.valorAplicado();
 
-        if (valor.compareTo(BigDecimal.ZERO) <= 0 || valor.compareTo(dashboardService.saldoTotal()) > 0) {
-            throw new RuntimeException("O valor deve ser maior que zero.");
+        if (valor.compareTo(BigDecimal.ZERO) <= 0 ){
+            throw new ValorInvalidoException();
+        }
+        if (valor.compareTo(dashboardService.saldoTotal()) > 0)  {
+            throw new SaldoInsuficienteException();
+            
         }
 
         return investimentoService.create(request, true);
@@ -146,7 +155,7 @@ public class RegistroService {
         //Verifica se o tipo pré definido na Categoria do enum bate com o tipo de registro escolhido
 
         if (!registroRequest.categoria().getTipo().equals(registroRequest.tipoRegistro())) {
-            throw new RuntimeException("Essa categoria é incompatível com o tipo de registro selecionado");
+            throw new TipoRegistroInvalidoException();
         }
     }
 

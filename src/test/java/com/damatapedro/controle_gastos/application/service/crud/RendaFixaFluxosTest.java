@@ -3,6 +3,8 @@ package com.damatapedro.controle_gastos.application.service.crud;
 import com.damatapedro.controle_gastos.application.dto.RegistroRequest;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaResponse;
+import com.damatapedro.controle_gastos.application.exception.SaldoInsuficienteException;
+import com.damatapedro.controle_gastos.application.exception.ValorResgateInsuficienteException;
 import com.damatapedro.controle_gastos.application.service.DashboardService;
 import com.damatapedro.controle_gastos.application.service.RegistroService;
 import com.damatapedro.controle_gastos.application.service.RendaFixaService;
@@ -84,11 +86,11 @@ class RendaFixaFluxosTest {
                 LocalDate.now()
         ));
 
-        var erro = assertThrows(RuntimeException.class, () -> registroService.investir(
+        var erro = assertThrows(SaldoInsuficienteException.class, () -> registroService.investir(
                 rendaFixaRequest("Aporte acima do saldo", new BigDecimal("400.00"), LocalDate.now())
         ));
 
-        assertEquals("O valor deve ser maior que zero.", erro.getMessage());
+        assertEquals("Saldo insuficiente", erro.getMessage());
         assertEquals(0, investimentoRepository.count());
     }
 
@@ -135,12 +137,15 @@ class RendaFixaFluxosTest {
         );
 
         var erro = assertThrows(
-                RuntimeException.class,
+                ValorResgateInsuficienteException.class,
                 () -> rendaFixaService.sacar(criado.id(), new BigDecimal("600.00"))
         );
         var rendaFixaPersistida = rendaFixaRepository.findById(criado.id()).orElseThrow();
 
-        assertEquals("Valor inválido", erro.getMessage());
+        assertEquals(
+                "O valor disponivel para saque é menor que o valor digitado. Disponivel:500.00",
+                erro.getMessage()
+        );
         assertEquals(0, new BigDecimal("500.00").compareTo(rendaFixaPersistida.getSaldoAtual()));
         assertEquals(0, registroRepository.count());
     }
