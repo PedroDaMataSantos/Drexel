@@ -20,12 +20,6 @@ public class RendaFixaController {
         this.service = service;
     }
 
-    @PutMapping("/{id}")
-    public InvestimentoResponse update(@PathVariable Long id, @RequestBody RendaFixaRequest request){
-
-        return service.update(id, request);
-    }
-
     @PostMapping("/{id}/sacar")
     @ResponseStatus(HttpStatus.CREATED)
     public RegistroResponse sacar(
@@ -33,6 +27,12 @@ public class RendaFixaController {
             @RequestParam BigDecimal valor
     ) {
         return service.sacar(id, valor);
+    }
+
+    @PutMapping("/{id}")
+    public InvestimentoResponse update(@PathVariable Long id, @RequestBody RendaFixaRequest request){
+
+        return service.update(id, request);
     }
 
     @GetMapping("/{id}/previsao-saque")

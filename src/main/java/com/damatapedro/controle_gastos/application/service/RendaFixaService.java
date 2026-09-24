@@ -64,7 +64,6 @@ public class RendaFixaService {
         return mapper.toResponse(repository.save(rendaFixaExistente));
     }
 
-
     // Cria o response diretamente para evitar dependência circular com RegistroService.
     public RegistroResponse sacar(Long id, BigDecimal valor) {
 
@@ -81,8 +80,6 @@ public class RendaFixaService {
         throw new ValorResgateInsuficienteException("O valor disponivel para saque é menor que o valor digitado. Disponivel:"
                 + disponivel);
     }
-
-
 
         rendaFixaExistente.setSaldoAtual(disponivel.subtract(valor));
         rendaFixaExistente.setUltimoSaque(LocalDate.now());
@@ -108,7 +105,6 @@ public class RendaFixaService {
                 registroSalvo.getData()
         );
     }
-
 
     public PrevisaoSaqueResponse previsaoSaque(Long id) {
 
