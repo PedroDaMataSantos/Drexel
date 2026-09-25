@@ -4,6 +4,7 @@ import com.damatapedro.controle_gastos.application.dto.DashboardResponse;
 import com.damatapedro.controle_gastos.domain.entity.Investimento;
 import com.damatapedro.controle_gastos.domain.entity.Registro;
 import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
+import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
 import com.damatapedro.controle_gastos.infrastructure.repository.InvestimentoRepository;
 import com.damatapedro.controle_gastos.infrastructure.repository.RegistroRepository;
 import com.damatapedro.controle_gastos.infrastructure.repository.RendaFixaRepository;
@@ -54,7 +55,8 @@ public class DashboardService {
                 rendimentoTotal(),
                 rendimentoMensal(),
                 gastoCategoriaTotal(),
-                gastoCategoriaMensal()
+                gastoCategoriaMensal(),
+                somaInvestimentoCategoriaTotal()
 
         );
     }
@@ -99,6 +101,19 @@ public class DashboardService {
 
         return gastos;
     }
+
+    public Map<CategoriaInvestimento,BigDecimal> somaInvestimentoCategoriaTotal(){
+
+        Map<CategoriaInvestimento,BigDecimal> soma = new EnumMap<>(CategoriaInvestimento.class);
+
+        for (CategoriaInvestimento categoria : CategoriaInvestimento.values()){
+
+            soma.put(categoria,somaInvestimentoPorCategoria(categoria));
+        }
+
+        return soma;
+    }
+
 
     public BigDecimal aporte(){
 
@@ -167,6 +182,8 @@ public class DashboardService {
         return gastos;
     }
 
+
+
     //CALCULOS
 
 
@@ -229,10 +246,12 @@ public class DashboardService {
             throw new IllegalArgumentException(
                     "A categoria " + categoria + " não pertence ao tipo SAIDA.");
         }
-
         return somaRegistros(registroRepository.findByCategoria(categoria));
+    }
 
+    private BigDecimal somaInvestimentoPorCategoria(CategoriaInvestimento categoriaInvestimento){
 
+        return somaInvestimentos(investimentoRepository.findByCategoria(categoriaInvestimento));
     }
 
     private BigDecimal somaInvestimentoMensal(){
@@ -266,7 +285,6 @@ public class DashboardService {
     }
 
 
-
     private BigDecimal somaGastosCategoriaMensal(CategoriaRegistro categoria){
 
         LocalDate hoje = LocalDate.now();
@@ -275,9 +293,7 @@ public class DashboardService {
 
          return somaRegistros(registroRepository.findByCategoriaAndDataBetween(categoria,inicio,fim));
 
-
-
-    }
+    };
 
     private BigDecimal somaRendimentoMensal(){
 

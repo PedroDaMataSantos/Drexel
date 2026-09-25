@@ -1,5 +1,6 @@
 package com.damatapedro.controle_gastos.application.dto;
 
+import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
 
 import java.math.BigDecimal;
@@ -18,7 +19,8 @@ public record DashboardResponse(
         BigDecimal rendimento,
         BigDecimal rendimentoMensal,
         Map<CategoriaRegistro, BigDecimal> gastoCategoriaTotal,
-        Map<CategoriaRegistro, BigDecimal> gastoCategoriaMensal
+        Map<CategoriaRegistro, BigDecimal> gastoCategoriaMensal,
+        Map<CategoriaInvestimento, BigDecimal> investimentoPorCategoria
 
 
 ) {

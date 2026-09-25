@@ -2,11 +2,13 @@ package com.damatapedro.controle_gastos.application.service;
 
 import com.damatapedro.controle_gastos.application.dto.*;
 import com.damatapedro.controle_gastos.application.exception.InvestimentoNotFoundException;
+import com.damatapedro.controle_gastos.application.exception.TipoInvestimentoInvalidoException;
 import com.damatapedro.controle_gastos.application.exception.ValorInvalidoException;
 import com.damatapedro.controle_gastos.application.exception.ValorResgateInsuficienteException;
 import com.damatapedro.controle_gastos.application.mapper.InvestimentoMapper;
 import com.damatapedro.controle_gastos.domain.entity.Registro;
 import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
+import com.damatapedro.controle_gastos.domain.enumeration.CategoriaInvestimento;
 import com.damatapedro.controle_gastos.infrastructure.repository.RegistroRepository;
 import com.damatapedro.controle_gastos.infrastructure.repository.RendaFixaRepository;
 import com.damatapedro.controle_gastos.domain.enumeration.CategoriaRegistro;
@@ -55,6 +57,8 @@ public class RendaFixaService {
         if (rendaFixaRequest.data() != null) {
             rendaFixaExistente.setData(rendaFixaRequest.data());
         }
+
+        validarCategoria(rendaFixaRequest.categoria());
 
         rendaFixaExistente.setCategoria(rendaFixaRequest.categoria());
         rendaFixaExistente .setPeriodicidadeTaxa(rendaFixaRequest.periodicidadeTaxa());
@@ -114,7 +118,23 @@ public class RendaFixaService {
         return calcularInformacoesSaque(rendaFixa);
     }
 
+    private void validarCategoria(CategoriaInvestimento categoria) {
+        if (categoria == null) {
+            throw new TipoInvestimentoInvalidoException(
+                    "A categoria é obrigatória."
+            );
+        }
+
+        if (!categoria.getTipoInvestimento().equals(RendaFixa.class)) {
+            throw new TipoInvestimentoInvalidoException(
+                    "A categoria " + categoria
+                            + " não pertence à renda fixa."
+            );
+        }
+    }
     private RendaFixa toEntity(RendaFixaRequest rendaFixaRequest, boolean isAporte) {
+
+        validarCategoria(rendaFixaRequest.categoria());
 
         LocalDate data = rendaFixaRequest.data()==null
                 ? LocalDate.now()

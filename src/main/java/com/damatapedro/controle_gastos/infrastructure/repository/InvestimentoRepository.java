@@ -16,6 +16,7 @@ public interface InvestimentoRepository extends JpaRepository<Investimento, Long
 
     List <Investimento> findByisAporteAndDataBetween(boolean isAporte, LocalDate inicio, LocalDate fim);
 
-
+    List<Investimento> findByCategoriaAndDataBetween(CategoriaInvestimento categoria, LocalDate inicio, LocalDate fim
+    );
 
 }
