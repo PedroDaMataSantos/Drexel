@@ -1,4 +1,4 @@
-package com.damatapedro.controle_gastos.application.infra;
+package com.damatapedro.controle_gastos.infrastructure;
 
 import com.damatapedro.controle_gastos.application.exception.*;
 import org.springframework.http.HttpStatus;
@@ -72,12 +72,21 @@ public class RestExceptionHandler {
                 .body(exception.getMessage());
     }
 
-    @ExceptionHandler(ClasseCategoriaInvestimentoInvalidoException.class)
-    public ResponseEntity<String> handleClasseCategoriaInvestimentoInvalido(
-            ClasseCategoriaInvestimentoInvalidoException exception
+    @ExceptionHandler(CategoriaInvestimentoInvalidoException.class)
+    public ResponseEntity<String> handleCategoriaInvestimentoInvalido(
+            CategoriaInvestimentoInvalidoException exception
     ){
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(exception.getMessage());
     }
+    @ExceptionHandler(CategoriaRegistroInvalidoException.class)
+    public ResponseEntity<String> handleCategoriaRegistroInvalido(
+            CategoriaRegistroInvalidoException exception
+    ){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(exception.getMessage());
+    }
+
 }

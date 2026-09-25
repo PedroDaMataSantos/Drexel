@@ -1,7 +1,7 @@
 package com.damatapedro.controle_gastos.api.controller;
 
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
-import com.damatapedro.controle_gastos.application.dto.PrevisaoSaqueResponse;
+import com.damatapedro.controle_gastos.application.dto.PrevisaoResgateParcialResponse;
 import com.damatapedro.controle_gastos.application.dto.RegistroResponse;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaRequest;
 import com.damatapedro.controle_gastos.application.service.RendaFixaService;
@@ -36,7 +36,7 @@ public class RendaFixaController {
     }
 
     @GetMapping("/{id}/previsao-saque")
-    public PrevisaoSaqueResponse previsaoSaque(@PathVariable Long id) {
+    public PrevisaoResgateParcialResponse previsaoSaque(@PathVariable Long id) {
         return service.previsaoSaque(id);
     }
 }

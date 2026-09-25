@@ -14,10 +14,13 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
-import static com.damatapedro.controle_gastos.application.calculation.PrevisaoSaqueCalculator.calcularInformacoesSaque;
-import static com.damatapedro.controle_gastos.application.calculation.PrevisaoSaqueCalculator.valorDisponivelSaque;
+import static com.damatapedro.controle_gastos.application.calculation.RendaFixaCalculator.calcularInformacoesSaque;
+import static com.damatapedro.controle_gastos.application.calculation.RendaFixaCalculator.valorDisponivelSaque;
+import static com.damatapedro.controle_gastos.application.calculation.RendimentoCalculator.valorBrutoFinal;
 
 
 @Service
@@ -71,9 +74,13 @@ public class RendaFixaService {
         RendaFixa rendaFixaExistente = repository.findById(id).
                 orElseThrow(() -> new InvestimentoNotFoundException());
 
-        BigDecimal disponivel = valorDisponivelSaque(rendaFixaExistente);
+        PrevisaoResgateParcialResponse informacoes =
+                calcularInformacoesSaque(rendaFixaExistente);
 
-    if ( valor.compareTo(BigDecimal.ZERO) <= 0) {
+        BigDecimal valorBruto = informacoes.valorBruto();
+        BigDecimal disponivel = informacoes.valorDisponivel();
+
+        if ( valor.compareTo(BigDecimal.ZERO) <= 0) {
         throw new ValorInvalidoException();
     }
 
@@ -82,7 +89,15 @@ public class RendaFixaService {
                 + disponivel);
     }
 
-        rendaFixaExistente.setSaldoAtual(disponivel.subtract(valor));
+        BigDecimal proporcaoResgatada = valor.divide(disponivel, MathContext.DECIMAL64);
+        BigDecimal principalResgatada = rendaFixaExistente.getPrincipalRemanescente().multiply(proporcaoResgatada);
+        BigDecimal novoPrincipal = rendaFixaExistente.getPrincipalRemanescente().subtract(principalResgatada).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal valorBrutoResgatado = valorBruto.multiply(proporcaoResgatada);
+        BigDecimal novoSaldo =valorBruto.subtract(valorBrutoResgatado).setScale(2, RoundingMode.HALF_EVEN);
+
+
+        rendaFixaExistente.setPrincipalRemanescente(novoPrincipal);
+        rendaFixaExistente.setSaldoAtual(novoSaldo);
         rendaFixaExistente.setUltimoSaque(LocalDate.now());
 
         repository.save(rendaFixaExistente);
@@ -107,7 +122,7 @@ public class RendaFixaService {
         );
     }
 
-    public PrevisaoSaqueResponse previsaoSaque(Long id) {
+    public PrevisaoResgateParcialResponse previsaoSaque(Long id) {
 
         RendaFixa rendaFixa = repository.findById(id)
                 .orElseThrow(() -> new InvestimentoNotFoundException());
@@ -118,13 +133,13 @@ public class RendaFixaService {
     private void validarCategoria(CategoriaInvestimento categoria) {
 
         if (categoria == null) {
-            throw new ClasseCategoriaInvestimentoInvalidoException(
+            throw new CategoriaInvestimentoInvalidoException(
                     "A categoria é obrigatória."
             );
         }
 
         if (!categoria.getTipoInvestimento().equals(RendaFixa.class)) {
-            throw new ClasseCategoriaInvestimentoInvalidoException(
+            throw new CategoriaInvestimentoInvalidoException(
                     "A categoria " + categoria
                             + " não pertence à renda fixa."
             );

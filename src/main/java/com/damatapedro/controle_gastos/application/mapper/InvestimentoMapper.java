@@ -2,11 +2,12 @@ package com.damatapedro.controle_gastos.application.mapper;
 
 import com.damatapedro.controle_gastos.application.dto.InvestimentoResponse;
 import com.damatapedro.controle_gastos.application.dto.RendaFixaResponse;
+import com.damatapedro.controle_gastos.application.exception.TipoInvestimentoInvalidoException;
 import com.damatapedro.controle_gastos.domain.entity.Investimento;
 import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
 import org.springframework.stereotype.Component;
 
-import static com.damatapedro.controle_gastos.application.calculation.PrevisaoSaqueCalculator.calcularInformacoesSaque;
+import static com.damatapedro.controle_gastos.application.calculation.RendaFixaCalculator.calcularInformacoesSaque;
 import static com.damatapedro.controle_gastos.application.calculation.RendimentoCalculator.calcularRendimento;
 
 @Component
@@ -32,7 +33,7 @@ public class    InvestimentoMapper {
 
             //case Renda Variavel quando disponivel
 
-            default -> throw new IllegalArgumentException(
+            default -> throw new TipoInvestimentoInvalidoException(
                     "Tipo de investimento não suportado: "
                             + investimento.getClass().getSimpleName()
             );

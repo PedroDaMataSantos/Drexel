@@ -130,6 +130,28 @@ class RendaFixaFluxosTest {
     }
 
     @Test
+    void devePreservarPrincipalERendimentoNaoResgatadosNoSaqueParcial() {
+        var criado = rendaFixaService.create(
+                rendaFixaRequest("CDB com rendimento", new BigDecimal("1000.00"), LocalDate.now().minusDays(365)),
+                false
+        );
+
+        var previsaoAntesDoSaque = rendaFixaService.previsaoSaque(criado.id());
+        BigDecimal valorSolicitado = previsaoAntesDoSaque.valorDisponivel()
+                .divide(new BigDecimal("2.00"));
+
+        rendaFixaService.sacar(criado.id(), valorSolicitado);
+
+        var rendaFixaPersistida = rendaFixaRepository.findById(criado.id()).orElseThrow();
+        BigDecimal principalEsperado = new BigDecimal("500.00");
+        BigDecimal saldoBrutoEsperado = previsaoAntesDoSaque.valorBruto()
+                .divide(new BigDecimal("2.00"));
+
+        assertEquals(0, principalEsperado.compareTo(rendaFixaPersistida.getPrincipalRemanescente()));
+        assertEquals(0, saldoBrutoEsperado.compareTo(rendaFixaPersistida.getSaldoAtual()));
+    }
+
+    @Test
     void deveRejeitarSaqueMaiorQueValorDisponivel() {
         var criado = rendaFixaService.create(
                 rendaFixaRequest("CDB para saque inválido", new BigDecimal("500.00"), LocalDate.now()),

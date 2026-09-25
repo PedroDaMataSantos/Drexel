@@ -1,6 +1,7 @@
 package com.damatapedro.controle_gastos.application.service;
 
 import com.damatapedro.controle_gastos.application.dto.DashboardResponse;
+import com.damatapedro.controle_gastos.application.exception.CategoriaRegistroInvalidoException;
 import com.damatapedro.controle_gastos.domain.entity.Investimento;
 import com.damatapedro.controle_gastos.domain.entity.Registro;
 import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.damatapedro.controle_gastos.application.calculation.RendimentoCalculator.calcularRendimento;
-
 
 @Service
 @Transactional
@@ -164,7 +164,6 @@ public class DashboardService {
   }
 
 
-
     public Map<CategoriaRegistro, BigDecimal> gastoCategoriaMensal() {
 
         Map<CategoriaRegistro, BigDecimal> gastos = new EnumMap<>(CategoriaRegistro.class);
@@ -178,11 +177,8 @@ public class DashboardService {
                 );
             }
 
-
         return gastos;
     }
-
-
 
     //CALCULOS
 
@@ -238,12 +234,10 @@ public class DashboardService {
 
     }
 
-
-
     private BigDecimal somaGastosPorCategoria(CategoriaRegistro categoria){
 
         if (categoria.getTipo() != TipoRegistro.SAIDA) {
-            throw new IllegalArgumentException(
+            throw new CategoriaRegistroInvalidoException(
                     "A categoria " + categoria + " não pertence ao tipo SAIDA.");
         }
         return somaRegistros(registroRepository.findByCategoria(categoria));

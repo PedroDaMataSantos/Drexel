@@ -31,6 +31,12 @@ public class RendaFixa extends Investimento {
     @Column(name = "saldo_atual", nullable = false, precision = 12, scale = 2)
     private BigDecimal saldoAtual;
 
+    @NotNull
+    @PositiveOrZero
+    @Digits(integer = 10, fraction = 2)
+    @Column(name = "principal_remanescente", nullable = false, precision = 12, scale = 2)
+    private BigDecimal principalRemanescente;
+
     @Column(name = "isento_ir", nullable = false)
     private boolean isentoIR;
 
@@ -67,6 +73,7 @@ public class RendaFixa extends Investimento {
         );
 
         this.saldoAtual = valorAplicado;
+        this.principalRemanescente= valorAplicado;
         this.isentoIR = isentoIR;
         this.taxaJuros = taxaJuros;
         this.periodicidadeTaxa = periodicidadeTaxa;

@@ -57,8 +57,13 @@ public class RendimentoCalculator {
 
     public static BigDecimal calcularRendimento(RendaFixa rendaFixa) {
 
-        return valorBrutoFinal(rendaFixa).subtract(rendaFixa.getSaldoAtual());
+        BigDecimal valorBruto = valorBrutoFinal(rendaFixa);
+
+        return valorBruto.subtract(
+                rendaFixa.getPrincipalRemanescente()
+        );
     }
+
 
 
     public static LocalDate dataReferencia(LocalDate dataAplicacao, LocalDate ultimoSaque) {
