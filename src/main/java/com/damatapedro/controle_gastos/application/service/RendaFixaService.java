@@ -1,10 +1,7 @@
 package com.damatapedro.controle_gastos.application.service;
 
 import com.damatapedro.controle_gastos.application.dto.*;
-import com.damatapedro.controle_gastos.application.exception.InvestimentoNotFoundException;
-import com.damatapedro.controle_gastos.application.exception.TipoInvestimentoInvalidoException;
-import com.damatapedro.controle_gastos.application.exception.ValorInvalidoException;
-import com.damatapedro.controle_gastos.application.exception.ValorResgateInsuficienteException;
+import com.damatapedro.controle_gastos.application.exception.*;
 import com.damatapedro.controle_gastos.application.mapper.InvestimentoMapper;
 import com.damatapedro.controle_gastos.domain.entity.Registro;
 import com.damatapedro.controle_gastos.domain.entity.RendaFixa;
@@ -119,14 +116,15 @@ public class RendaFixaService {
     }
 
     private void validarCategoria(CategoriaInvestimento categoria) {
+
         if (categoria == null) {
-            throw new TipoInvestimentoInvalidoException(
+            throw new ClasseCategoriaInvestimentoInvalidoException(
                     "A categoria é obrigatória."
             );
         }
 
         if (!categoria.getTipoInvestimento().equals(RendaFixa.class)) {
-            throw new TipoInvestimentoInvalidoException(
+            throw new ClasseCategoriaInvestimentoInvalidoException(
                     "A categoria " + categoria
                             + " não pertence à renda fixa."
             );

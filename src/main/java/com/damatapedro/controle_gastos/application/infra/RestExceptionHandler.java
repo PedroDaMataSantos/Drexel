@@ -71,4 +71,13 @@ public class RestExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(exception.getMessage());
     }
+
+    @ExceptionHandler(ClasseCategoriaInvestimentoInvalidoException.class)
+    public ResponseEntity<String> handleClasseCategoriaInvestimentoInvalido(
+            ClasseCategoriaInvestimentoInvalidoException exception
+    ){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(exception.getMessage());
+    }
 }
