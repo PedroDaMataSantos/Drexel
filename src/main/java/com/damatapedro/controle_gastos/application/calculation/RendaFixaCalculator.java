@@ -14,18 +14,30 @@ import static com.damatapedro.controle_gastos.application.calculation.Tributacao
 public class RendaFixaCalculator {
 
     //Esse metodo precisou de rounding em cada operação pois deu erro de lenght
-    public static PrevisaoResgateParcialResponse calcularInformacoesSaque(RendaFixa rendaFixa) {
+    public static PrevisaoResgateParcialResponse calcularInformacoesSaque(
+            RendaFixa rendaFixa) {
 
-        LocalDate dataReferencia = dataReferencia(rendaFixa.getData(),rendaFixa.getUltimoSaque());
-        long diasCorridos = calcularDiasCorridos(dataReferencia, LocalDate.now());
+        // Para os impostos, conta desde a aplicação original.
+        LocalDate dataAplicacao = rendaFixa.getData();
 
-        BigDecimal valorBruto = valorBrutoFinal(rendaFixa).setScale(2, RoundingMode.HALF_EVEN);
+        long diasCorridos =
+                calcularDiasCorridos(dataAplicacao, LocalDate.now());
+
+        BigDecimal valorBruto = valorBrutoFinal(rendaFixa)
+                .setScale(2, RoundingMode.HALF_EVEN);
+
         BigDecimal rendimento = calcularRendimento(rendaFixa);
 
-        BigDecimal iof = calcularIOF(rendimento, dataReferencia).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal iof = calcularIOF(rendimento, dataAplicacao)
+                .setScale(2, RoundingMode.HALF_EVEN);
+
         BigDecimal rendimentoLiquidoIOF = rendimento.subtract(iof);
 
-        BigDecimal ir = calcularIR(rendimentoLiquidoIOF, rendaFixa.isIsentoIR(),diasCorridos).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal ir = calcularIR(
+                rendimentoLiquidoIOF,
+                rendaFixa.isIsentoIR(),
+                diasCorridos
+        ).setScale(2, RoundingMode.HALF_EVEN);
 
         BigDecimal valorDisponivel = valorBruto
                 .subtract(iof)
@@ -38,7 +50,6 @@ public class RendaFixaCalculator {
                 ir,
                 valorDisponivel
         );
-
     }
     public static BigDecimal valorDisponivelSaque(RendaFixa rendaFixa) {
 

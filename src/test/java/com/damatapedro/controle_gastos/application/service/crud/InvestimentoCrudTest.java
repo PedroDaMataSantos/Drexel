@@ -13,7 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.test.web.servlet.client.MockMvcWebTestClient;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.math.BigDecimal;
@@ -22,11 +23,12 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+@SpringBootTest
 class InvestimentoCrudTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private WebTestClient webTestClient;
 
     @Autowired
@@ -40,7 +42,8 @@ class InvestimentoCrudTest {
 
     @BeforeEach
     void limparInvestimentos() {
-        // As requisições HTTP usam outra transação; cada teste começa com o banco limpo.
+        // Exercita controllers e serialização sem depender de uma porta de rede.
+        webTestClient = MockMvcWebTestClient.bindToApplicationContext(context).build();
         investimentoRepository.deleteAll();
     }
 

@@ -132,7 +132,14 @@ class RendaFixaFluxosTest {
     @Test
     void devePreservarPrincipalERendimentoNaoResgatadosNoSaqueParcial() {
         var criado = rendaFixaService.create(
-                rendaFixaRequest("CDB com rendimento", new BigDecimal("1000.00"), LocalDate.now().minusDays(365)),
+                new RendaFixaRequest(
+                        "CDB com rendimento",
+                        new BigDecimal("1000.00"),
+                        LocalDate.now().minusDays(365),
+                        CategoriaInvestimento.CDB,
+                        new BigDecimal("20.00"),
+                        PeriodicidadeTaxa.ANUAL
+                ),
                 false
         );
 
